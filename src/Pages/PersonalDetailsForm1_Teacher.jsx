@@ -78,7 +78,7 @@ const PersonalDetailsForm = () => {
       // Convert form data to JSON and store it
       const jsonData = JSON.stringify(formData);
       localStorage.setItem('personaldetails', jsonData);
-      navigate('/slots');
+      navigate('/details2');
     }
   };
 
