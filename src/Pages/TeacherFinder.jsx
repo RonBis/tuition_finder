@@ -14,7 +14,7 @@ const TuitionFinder = () => {
         distance: "10 Kms",
         phone: "9876543210",
         description: "Experienced in teaching mathematics and science with a focus on interactive learning.",
-        image: "https://via.placeholder.com/100", // Placeholder image for Alice
+        image: "src/assets/DP/dp1.jpg", // Placeholder image for Alice
         type: ['online', 'offline', 'individual']
       },
       {
@@ -24,7 +24,7 @@ const TuitionFinder = () => {
         distance: "15 Kms",
         phone: "7890123456",
         description: "Expert in English and History, ensuring students excel in academics.",
-        image: "https://via.placeholder.com/100", // Placeholder image for Bob
+        image: "src/assets/DP/dp2.jpg", // Placeholder image for Bob
         type: ['online', 'group']
       },
       {
@@ -34,7 +34,7 @@ const TuitionFinder = () => {
         distance: "12 Kms",
         phone: "6543210987",
         description: "Specialized in computer science and coding with a practical approach to problem-solving.",
-        image: "https://via.placeholder.com/100", // Placeholder image for Charlie
+        image: "src/assets/DP/dp3.jpg", // Placeholder image for Charlie
         type: ['offline', 'individual']
       },
       {
@@ -44,7 +44,7 @@ const TuitionFinder = () => {
         distance: "12 Kms",
         phone: "6543210987",
         description: "Specialized in computer science and coding with a practical approach to problem-solving.",
-        image: "https://via.placeholder.com/100", // Placeholder image for Charlie
+        image: "src/assets/DP/dp4.jpg", // Placeholder image for Charlie
         type: ['online', 'group']
       },
     ],

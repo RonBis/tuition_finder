@@ -9,7 +9,6 @@ const PersonalDetailsForm = () => {
     collegeName: '',
     universityName: '',
     EducationalQualification: ''
-    
   });
 
   const [errors, setErrors] = useState({});
@@ -51,36 +50,31 @@ const PersonalDetailsForm = () => {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-indigo-100 flex flex-col">
+    <div className="min-h-screen w-screen bg-indigo-100 flex flex-col overflow-x-hidden">
       {/* Header */}
-      <header className="bg-[#4527a0] text-white p-4 flex items-center" style={{height: '201px' }}>
+      <header className="bg-[#4527a0] text-white p-4 flex items-center justify-center md:justify-start w-full" style={{height: '150px', minHeight: '100px'}}>
         <img 
           src="src/assets/LOGO (2).png" 
           alt="Tuition Finder Logo"
-          style={{
-            height: '78.24px',
-            width: '169.89px',
-            position: 'relative',
-            left: '69px'
-          }}
+          className="h-12 md:h-20 w-auto md:ml-16"
         />
       </header>
 
       {/* Form */}
-      <div className="flex-grow flex justify-center items-center">
-        <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-md">
-          <h1 className="text-3xl font-bold text-center mb-8">Educational Details</h1>
+      <div className="flex-grow flex justify-center items-center p-4 w-full">
+        <div className="w-full max-w-4xl bg-white p-4 md:p-8 rounded-lg shadow-md mx-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-8">Educational Details</h1>
 
           {/* Form Fields */}
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
-                <label className="block text-sm font-medium text-gray-600">Choose your Educational Qualification</label>
+          <div className="space-y-4 md:space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <div className="col-span-1">
+                <label className="block text-sm font-medium text-gray-600 mb-1">Choose your Educational Qualification</label>
                 <select
                   name="EducationalQualification"
                   value={formData.EducationalQualification}
                   onChange={handleInputChange}
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
+                  className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
                     ${errors.EducationalQualification ? 'border-red-500' : 'border-gray-300'}`}
                 >
                   <option value="">Choose</option>
@@ -95,55 +89,55 @@ const PersonalDetailsForm = () => {
                 </select>
                 {errors.EducationalQualification && <p className="mt-1 text-sm text-red-500">{errors.EducationalQualification}</p>}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-600">School Name</label>
+              <div className="col-span-1">
+                <label className="block text-sm font-medium text-gray-600 mb-1">School Name</label>
                 <input
                   type="text"
                   name="schoolName"
                   value={formData.schoolName}
                   onChange={handleInputChange}
                   placeholder="Enter School Name"
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
+                  className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
                     ${errors.schoolName ? 'border-red-500' : 'border-gray-300'}`}
                 />
                 {errors.schoolName && <p className="mt-1 text-sm text-red-500">{errors.schoolName}</p>}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-600">College Name</label>
+              <div className="col-span-1">
+                <label className="block text-sm font-medium text-gray-600 mb-1">College Name</label>
                 <input
                   type="text"
                   name="collegeName"
                   value={formData.collegeName}
                   onChange={handleInputChange}
                   placeholder="Enter College Name"
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
+                  className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
                     ${errors.collegeName ? 'border-red-500' : 'border-gray-300'}`}
                 />
                 {errors.collegeName && <p className="mt-1 text-sm text-red-500">{errors.collegeName}</p>}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-600">University Name</label>
+              <div className="col-span-1">
+                <label className="block text-sm font-medium text-gray-600 mb-1">University Name</label>
                 <input
                   type="text"
                   name="universityName"
                   value={formData.universityName}
                   onChange={handleInputChange}
                   placeholder="Enter University Name"
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
+                  className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
                     ${errors.universityName ? 'border-red-500' : 'border-gray-300'}`}
                 />
                 {errors.universityName && <p className="mt-1 text-sm text-red-500">{errors.universityName}</p>}
               </div>
             </div>
-            <div className="flex justify-between items-center mt-6">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
               <button
-                className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
+                className="w-full sm:w-auto px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300 text-base md:text-sm"
                 onClick={() => navigate('/')}
               >
                 Back
               </button>
               <button
-                className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                className="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-base md:text-sm"
                 onClick={handleNext}
               >
                 Next

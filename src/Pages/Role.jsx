@@ -44,27 +44,27 @@ const TuitionFinderPage = () => {
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div
-            className="bg-white w-56 h-56 p-6 rounded-lg shadow-md text-center cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center justify-center"
+            className="bg-white w-44 h-44 md:w-56 md:h-56 p-4 md:p-6 rounded-lg shadow-md text-center cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center justify-center"
             onClick={() => handleCardClick('student')}
           >
-            <img src="src/assets/student-icon.png" alt="Student Icon" className="w-16 h-16" />
-            <h3 className="mt-4 text-lg font-medium">A Student looking for guidance</h3>
+            <img src="src/assets/student-icon.png" alt="Student Icon" className="w-12 h-12 md:w-16 md:h-16" />
+            <h3 className="mt-4 text-base md:text-lg font-medium">A Student looking for guidance</h3>
           </div>
 
           <div
-            className="bg-white w-56 h-56 p-6 rounded-lg shadow-md text-center cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center justify-center"
+            className="bg-white w-44 h-44 md:w-56 md:h-56 p-4 md:p-6 rounded-lg shadow-md text-center cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center justify-center"
             onClick={() => handleCardClick('teacher')}
           >
-            <img src="src/assets/teacher-icon.png" alt="Teacher Icon" className="w-16 h-16" />
-            <h3 className="mt-4 text-lg font-medium">A teacher, looking for students</h3>
+            <img src="src/assets/teacher-icon.png" alt="Teacher Icon" className="w-12 h-12 md:w-16 md:h-16" />
+            <h3 className="mt-4 text-base md:text-lg font-medium">A teacher, looking for students</h3>
           </div>
 
           <div
-            className="bg-white w-56 h-56 p-6 rounded-lg shadow-md text-center cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center justify-center"
+            className="bg-white w-44 h-44 md:w-56 md:h-56 p-4 md:p-6 rounded-lg shadow-md text-center cursor-pointer hover:shadow-lg transition-shadow flex flex-col items-center justify-center"
             onClick={() => handleCardClick('job')}
           >
-            <img src="src/assets/job-icon.png" alt="Job Icon" className="w-16 h-16" />
-            <h3 className="mt-4 text-lg font-medium">Seeking for Job opportunities</h3>
+            <img src="src/assets/job-icon.png" alt="Job Icon" className="w-12 h-12 md:w-16 md:h-16" />
+            <h3 className="mt-4 text-base md:text-lg font-medium">Seeking for Job opportunities</h3>
           </div>
         </div>
 

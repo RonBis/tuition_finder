@@ -177,75 +177,75 @@ const TuitionFinder = () => {
 
   return (
     <div 
-  className="w-screen h-screen overflow-hidden"
-  style={{
-    backgroundImage: "url('src/Pages/bg.png')",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-  }}
->
-  <div className="absolute top-6 left-6 flex items-center text-white">
-    <svg className="w-8 h-8 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-    </svg>
-    <span className="text-xl font-bold">Tuition Finder</span>
-  </div>
-
-  <div className="w-full h-full flex items-center justify-center p-6">
-    <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center">
-      {/* Left side */}
-      <div className="w-full lg:w-1/2 text-white px-6 lg:pr-12 mb-10 lg:mb-0">
-        <h1 className="text-4xl lg:text-5xl font-bold mb-6 leading-snug">
-          Helping students achieve the education they deserve
-        </h1>
+      className="h-screen w-screen overflow-hidden"
+      style={{
+        backgroundImage: "url('src/Pages/bg.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div className="fixed top-4 sm:top-6 left-4 sm:left-6 flex items-center text-white z-10">
+        <svg className="w-6 h-6 sm:w-8 sm:h-8 mr-2 sm:mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        <span className="text-lg sm:text-xl font-bold">Tuition Finder</span>
       </div>
 
-      {/* Right side */}
-      <div className="w-full lg:w-1/2 px-6 lg:pl-12">
-        <div className="bg-white rounded-lg p-8 shadow-lg w-full max-w-md mx-auto">
-          <h2 className="text-2xl font-bold mb-2">Welcome to Tuition Finder</h2>
-          <p className="text-gray-600 mb-6">Start creating your new account</p>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <InputField
-              type="text"
-              name="emailOrPhone"
-              placeholder="Enter Mobile No. or Email Id"
-              value={formData.emailOrPhone}
-              error={errors.emailOrPhone}
-            />
+      <div className="h-screen w-full flex items-center justify-center">
+        <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-8 lg:gap-12 px-4 sm:px-6">
+          {/* Left side */}
+          <div className="w-full lg:w-1/2 text-white text-center lg:text-left">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 leading-tight sm:leading-snug">
+              Helping students achieve the education they deserve
+            </h1>
+          </div>
 
-            <InputField
-              type="password"
-              name="password"
-              placeholder="Create new password"
-              value={formData.password}
-              error={errors.password}
-            />
+          {/* Right side */}
+          <div className="w-full lg:w-1/2">
+            <div className="bg-white rounded-lg p-6 sm:p-8 shadow-lg w-full max-w-md mx-auto">
+              <h2 className="text-xl sm:text-2xl font-bold mb-2">Welcome to Tuition Finder</h2>
+              <p className="text-gray-600 mb-6">Start creating your new account</p>
+              
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <InputField
+                  type="text"
+                  name="emailOrPhone"
+                  placeholder="Enter Mobile No. or Email Id"
+                  value={formData.emailOrPhone}
+                  error={errors.emailOrPhone}
+                />
 
-            <InputField
-              type="password"
-              name="confirmPassword"
-              placeholder="Re-enter Password"
-              value={formData.confirmPassword}
-              error={errors.confirmPassword}
-            />
+                <InputField
+                  type="password"
+                  name="password"
+                  placeholder="Create new password"
+                  value={formData.password}
+                  error={errors.password}
+                />
 
-            <button
-              type="submit"
-              className="w-full bg-indigo-800 text-white py-3 rounded-md hover:bg-indigo-700 
-                transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 
-                focus:ring-offset-2"
-            >
-              Continue
-            </button>
-          </form>
+                <InputField
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="Re-enter Password"
+                  value={formData.confirmPassword}
+                  error={errors.confirmPassword}
+                />
+
+                <button
+                  type="submit"
+                  className="w-full bg-indigo-800 text-white py-3 rounded-md hover:bg-indigo-700 
+                    transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 
+                    focus:ring-offset-2 text-sm sm:text-base"
+                >
+                  Continue
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
   );
 };
 

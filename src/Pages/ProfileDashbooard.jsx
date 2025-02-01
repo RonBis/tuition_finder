@@ -38,7 +38,11 @@ const ProfileDashboard = () => {
               </div>
               <div className="p-4">
                 <div className="flex justify-center mb-6">
-                  <div className="w-32 h-32 bg-gray-200 rounded-full"></div>
+                  <img 
+                    src="src/assets/DP/dp3.jpg"
+                    alt="Profile"
+                    className="w-32 h-32 rounded-full object-cover"
+                  />
                 </div>
                 <div className="space-y-4">
                   <h3 className="font-semibold">Personal Details</h3>
