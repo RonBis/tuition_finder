@@ -89,8 +89,10 @@ const PersonalDetailsForm = () => {
             height: '78.24px',
             width: '169.89px',
             position: 'relative',
-            left: '69px'
+            left: '69px',
+            cursor: 'pointer'
           }}
+          onClick={() => navigate('/')}
         />
       </header>
 
@@ -204,7 +206,7 @@ const PersonalDetailsForm = () => {
             <div className="flex justify-between items-center mt-6">
               <button
                 className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/details')}
               >
                 Back
               </button>

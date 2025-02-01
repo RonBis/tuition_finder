@@ -71,16 +71,20 @@ const Slots = () => {
   return (
     <div className="w-screen h-screen flex flex-col bg-[#EBECFF]">
       {/* Navbar */}
-      <div className="w-full bg-[#001F54] shadow-md" style={{ height: '125px' }}>
-        <div className="container mx-auto px-4 py-4 h-full flex items-center">
-          <div className="flex items-center">
-            <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z" />
-            </svg>
-            <h1 className="text-2xl font-bold text-white ml-2">Tuition Finder</h1>
-          </div>
-        </div>
-      </div>
+      <header className="bg-[#4527a0] text-white p-4 flex items-center" style={{height: '165px' }}>
+        <img 
+          src="src/assets/LOGO (2).png" 
+          alt="Tuition Finder Logo"
+          style={{
+            height: '78.24px',
+            width: '169.89px',
+            position: 'relative',
+            left: '69px',
+            cursor: 'pointer'
+          }}
+          onClick={() => navigate('/')}
+        />
+      </header>
 
       {/* Main Content - Centered */}
       <div className="flex-1 flex items-center justify-center px-4">

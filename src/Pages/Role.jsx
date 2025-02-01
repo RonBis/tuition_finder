@@ -31,8 +31,10 @@ const TuitionFinderPage = () => {
             height: '78.24px',
             width: '169.89px',
             position: 'relative',
-            left: '69px'
+            left: '69px',
+            cursor: 'pointer'
           }}
+          onClick={() => navigate('/')}
         />
       </header>
 

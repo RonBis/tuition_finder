@@ -85,16 +85,18 @@ const PersonalDetailsForm = () => {
   return (
     <div className="min-h-screen w-screen bg-indigo-100 flex flex-col">
       {/* Header */}
-      <header className="bg-[#4527a0] text-white p-4 flex items-center" style={{ height: '201px' }}>
-        <img
-          src="src/assets/LOGO (2).png"
+      <header className="bg-[#4527a0] text-white p-4 flex items-center" style={{height: '201px' }}>
+        <img 
+          src="src/assets/LOGO (2).png" 
           alt="Tuition Finder Logo"
           style={{
             height: '78.24px',
             width: '169.89px',
             position: 'relative',
-            left: '69px'
+            left: '69px',
+            cursor: 'pointer'
           }}
+          onClick={() => navigate('/')}
         />
       </header>
       {/* Form */}
@@ -205,7 +207,7 @@ const PersonalDetailsForm = () => {
             <div className="flex justify-between items-center mt-6">
               <button
                 className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/role')}
               >
                 Back
               </button>
