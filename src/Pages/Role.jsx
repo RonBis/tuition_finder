@@ -13,7 +13,7 @@ const TuitionFinderPage = () => {
         navigate('/details');
         break;
       case 'job':
-        // Add job seeker flow
+        navigate('/jobdetails1');
         break;
       default:
         break;
