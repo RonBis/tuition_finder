@@ -13,6 +13,7 @@ import EDF_S from './Pages/EducationalQualification_Student';
 import EDF_J from './Pages/EducationalQualification_Job';
 import PDF_J from './Pages/PersonalDetails_Jobs';
 import JobListing from "./Pages/JobListing";
+import Dashboard from "./Pages/TutorDashboard"
 const App = () => {
   return (
     <div>
@@ -27,11 +28,12 @@ const App = () => {
         <Route path='/slots' element={<Slots />} />
         <Route path='/profile' element={<PD />} />
         {/* Redirect to check.html */}
-        <Route path='/tutor' element={<Navigate to="/check.html" />} />
+        <Route path='/tutor' element={<Dashboard/>} />
         <Route path='/teacherfinder' element={<TeacherFinder />} />
         <Route path='/role' element={<Role/>} />
         <Route path='/subject' element={<Subject/>} />
         <Route path='/joblist' element={<JobListing/>} />
+        <Route path='/dashboard' element={<Dashboard/>} />
       </Routes>
     </div>
   );
