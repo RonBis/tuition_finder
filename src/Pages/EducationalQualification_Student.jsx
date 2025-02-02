@@ -76,7 +76,7 @@ const PersonalDetailsForm = () => {
           <div className="space-y-4 md:space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Choose your Educational Qualification</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Choose your Educational Qualification <span className="text-red-500">*</span></label>
                 <select
                   name="EducationalQualification"
                   value={formData.EducationalQualification}
@@ -97,7 +97,7 @@ const PersonalDetailsForm = () => {
                 {errors.EducationalQualification && <p className="mt-1 text-sm text-red-500">{errors.EducationalQualification}</p>}
               </div>
               <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-600 mb-1">School Name</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">School Name <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   name="schoolName"
@@ -110,7 +110,7 @@ const PersonalDetailsForm = () => {
                 {errors.schoolName && <p className="mt-1 text-sm text-red-500">{errors.schoolName}</p>}
               </div>
               <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-600 mb-1">College Name</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">College Name </label>
                 <input
                   type="text"
                   name="collegeName"

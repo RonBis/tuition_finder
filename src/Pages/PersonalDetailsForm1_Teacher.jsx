@@ -107,7 +107,7 @@ const PersonalDetailsForm = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-600">Name</label>
+                <label className="block text-sm font-medium text-gray-600">Name <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   name="name"
@@ -120,7 +120,7 @@ const PersonalDetailsForm = () => {
                 {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">Mobile Number</label>
+                <label className="block text-sm font-medium text-gray-600">Mobile Number <span className="text-red-500">*</span></label>
                 <input
                   type="tel"
                   name="mobileNumber"
@@ -133,7 +133,7 @@ const PersonalDetailsForm = () => {
                 {errors.mobileNumber && <p className="mt-1 text-sm text-red-500">{errors.mobileNumber}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">Alternate Number</label>
+                <label className="block text-sm font-medium text-gray-600">Alternate Number </label>
                 <input
                   type="tel"
                   name="alternateNumber"
@@ -146,7 +146,7 @@ const PersonalDetailsForm = () => {
                 {errors.alternateNumber && <p className="mt-1 text-sm text-red-500">{errors.alternateNumber}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">Gender</label>
+                <label className="block text-sm font-medium text-gray-600">Gender <span className="text-red-500">*</span></label>
                 <select
                   name="gender"
                   value={formData.gender}
@@ -162,7 +162,7 @@ const PersonalDetailsForm = () => {
                 {errors.gender && <p className="mt-1 text-sm text-red-500">{errors.gender}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">Date of Birth</label>
+                <label className="block text-sm font-medium text-gray-600">Date of Birth <span className="text-red-500">*</span></label>
                 <input
                   type="date"
                   name="dateOfBirth"
@@ -174,7 +174,7 @@ const PersonalDetailsForm = () => {
                 {errors.dateOfBirth && <p className="mt-1 text-sm text-red-500">{errors.dateOfBirth}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">Marital Status</label>
+                <label className="block text-sm font-medium text-gray-600">Marital Status <span className="text-red-500">*</span></label>
                 <select
                   name="maritalStatus"
                   value={formData.maritalStatus}
@@ -192,7 +192,7 @@ const PersonalDetailsForm = () => {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600">Address</label>
+              <label className="block text-sm font-medium text-gray-600">Address <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 name="address"

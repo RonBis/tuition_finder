@@ -27,7 +27,6 @@ const App = () => {
         <Route path='/jobdetails2' element={<EDF_J />} />
         <Route path='/slots' element={<Slots />} />
         <Route path='/profile' element={<PD />} />
-        {/* Redirect to check.html */}
         <Route path='/tutor' element={<Dashboard/>} />
         <Route path='/teacherfinder' element={<TeacherFinder />} />
         <Route path='/role' element={<Role/>} />

@@ -116,7 +116,7 @@ const PersonalDetailsForm = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-600">Choose your Educational Qualification</label>
+                <label className="block text-sm font-medium text-gray-600">Choose your Educational Qualification <span className="text-red-500">*</span></label>
                 <select
                   name="EducationalQualification"
                   value={formData.EducationalQualification}
@@ -137,7 +137,7 @@ const PersonalDetailsForm = () => {
                 {errors.EducationalQualification && <p className="mt-1 text-sm text-red-500">{errors.EducationalQualification}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">School Name</label>
+                <label className="block text-sm font-medium text-gray-600">School Name <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   name="schoolName"
@@ -150,7 +150,7 @@ const PersonalDetailsForm = () => {
                 {errors.schoolName && <p className="mt-1 text-sm text-red-500">{errors.schoolName}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">College Name</label>
+                <label className="block text-sm font-medium text-gray-600">College Name </label>
                 <input
                   type="text"
                   name="collegeName"
@@ -176,7 +176,7 @@ const PersonalDetailsForm = () => {
                 {errors.universityName && <p className="mt-1 text-sm text-red-500">{errors.universityName}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">Year of Passing</label>
+                <label className="block text-sm font-medium text-gray-600">Year of Passing <span className="text-red-500">*</span></label>
                 <input
                   type="date"
                   name="yearofPassing"
@@ -188,7 +188,7 @@ const PersonalDetailsForm = () => {
                 {errors.yearofPassing && <p className="mt-1 text-sm text-red-500">{errors.yearofPassing}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">Latest Resume (PDF only)</label>
+                <label className="block text-sm font-medium text-gray-600">Latest Resume (PDF only) <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <input
                     type="file"
