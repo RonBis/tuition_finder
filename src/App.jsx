@@ -14,6 +14,7 @@ import EDF_J from './Pages/EducationalQualification_Job';
 import PDF_J from './Pages/PersonalDetails_Jobs';
 import JobListing from "./Pages/JobListing";
 import Dashboard from "./Pages/TutorDashboard"
+import Admin from "./Pages/AdminDashboard";
 const App = () => {
   return (
     <div>
@@ -33,6 +34,7 @@ const App = () => {
         <Route path='/subject' element={<Subject/>} />
         <Route path='/joblist' element={<JobListing/>} />
         <Route path='/dashboard' element={<Dashboard/>} />
+        <Route path='/Admin' element={<Admin/>} />
       </Routes>
     </div>
   );
