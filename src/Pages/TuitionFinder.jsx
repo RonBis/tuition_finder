@@ -1,24 +1,21 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/api'; // Import the auth service
 
 const TuitionFinder = () => {
   const [formData, setFormData] = useState({
     emailOrPhone: '',
-    password: '',
-    confirmPassword: ''
+    password: ''
   });
   
   const [errors, setErrors] = useState({});
-  const [showPassword, setShowPassword] = useState({
-    password: false,
-    confirmPassword: false
-  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Add refs for input fields
   const inputRefs = {
     emailOrPhone: useRef(),
-    password: useRef(),
-    confirmPassword: useRef()
+    password: useRef()
   };
   const navigate = useNavigate();
 
@@ -27,28 +24,10 @@ const TuitionFinder = () => {
     
     if (!formData.emailOrPhone) {
       newErrors.emailOrPhone = 'This field is required';
-    } else if (formData.emailOrPhone.includes('@')) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.emailOrPhone)) {
-        newErrors.emailOrPhone = 'Invalid email format';
-      }
-    } else {
-      const phoneRegex = /^\d{10}$/;
-      if (!phoneRegex.test(formData.emailOrPhone)) {
-        newErrors.emailOrPhone = 'Invalid phone number (10 digits required)';
-      }
     }
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-    
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.confirmPassword !== formData.password) {
-      newErrors.confirmPassword = 'Passwords do not match';
     }
     
     setErrors(newErrors);
@@ -81,11 +60,75 @@ const TuitionFinder = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  // New handleLogin function to encapsulate login logic
+  const handleLogin = async (credentials) => {
+    try {
+      const response = await authService.signIn(credentials);
+      
+      // Make sure to save the auth token
+      localStorage.setItem('auth_token', response.data.token);
+      
+      // Save the user_id
+      if (response.data && response.data.user && response.data.user.id) {
+        localStorage.setItem('user_id', response.data.user.id);
+        console.log('Saved user_id to localStorage:', response.data.user.id);
+      } else {
+        console.error('User ID not found in response:', response.data);
+      }
+      
+      // Navigate to the dashboard
+      navigate('/details');
+    } catch (error) {
+      console.error('Login error:', error);
+      setErrors({
+        apiError: 'Invalid credentials. Please try again.'
+      });
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      console.log('Form submitted:', formData);
-      navigate('/role'); // Redirect to /details
+      try {
+        setIsLoading(true);
+        
+        // Create credentials object based on input type
+        const credentials = formData.emailOrPhone.includes('@') 
+          ? { email: formData.emailOrPhone, password: formData.password }
+          : { phone: formData.emailOrPhone, password: formData.password };
+        
+        // Use the new handleLogin function
+        await handleLogin(credentials);
+      } catch (error) {
+        console.error('Login error:', error);
+        
+        // Handle API errors
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          if (error.response.data && error.response.data.message) {
+            setErrors({
+              apiError: error.response.data.message
+            });
+          } else {
+            setErrors({
+              apiError: 'Authentication failed. Please check your credentials.'
+            });
+          }
+        } else if (error.request) {
+          // The request was made but no response was received
+          setErrors({
+            apiError: 'No response from server. Please try again later.'
+          });
+        } else {
+          // Something happened in setting up the request
+          setErrors({
+            apiError: 'An error occurred. Please try again.'
+          });
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -111,14 +154,14 @@ const TuitionFinder = () => {
     </button>
   );
 
-  const PasswordToggle = ({ field }) => (
+  const PasswordToggle = () => (
     <button
       type="button"
-      onClick={() => setShowPassword(prev => ({ ...prev, [field]: !prev[field] }))}
+      onClick={() => setShowPassword(prev => !prev)}
       className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100"
       onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
     >
-      {showPassword[field] ? (
+      {showPassword ? (
         <svg 
           className="w-4 h-4 text-gray-500" 
           viewBox="0 0 24 24" 
@@ -153,7 +196,7 @@ const TuitionFinder = () => {
       <div className="relative">
         <input
           ref={inputRefs[name]}
-          type={type === 'password' ? (showPassword[name] ? 'text' : 'password') : type}
+          type={type === 'password' ? (showPassword ? 'text' : 'password') : type}
           name={name}
           placeholder={placeholder}
           className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 
@@ -161,13 +204,13 @@ const TuitionFinder = () => {
             pr-20`}
           value={value}
           onChange={handleInputChange}
-          autoComplete="off"
+          autoComplete={type === 'password' ? 'current-password' : 'username'}
         />
         <CrossIcon 
           onClick={(e) => handleClear(e, name)}
           visible={value.length > 0}
         />
-        {type === 'password' && <PasswordToggle field={name} />}
+        {type === 'password' && <PasswordToggle />}
       </div>
       {error && (
         <p className="text-red-500 text-sm">{error}</p>
@@ -205,7 +248,13 @@ const TuitionFinder = () => {
           <div className="w-full lg:w-1/2">
             <div className="bg-white rounded-lg p-6 sm:p-8 shadow-lg w-full max-w-md mx-auto">
               <h2 className="text-xl sm:text-2xl font-bold mb-2">Welcome to Tuition Finder</h2>
-              <p className="text-gray-600 mb-6">Start creating your new account</p>
+              <p className="text-gray-600 mb-6">Log in to your account</p>
+              
+              {errors.apiError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+                  {errors.apiError}
+                </div>
+              )}
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <InputField
@@ -219,27 +268,43 @@ const TuitionFinder = () => {
                 <InputField
                   type="password"
                   name="password"
-                  placeholder="Create new password"
+                  placeholder="Enter password"
                   value={formData.password}
                   error={errors.password}
                 />
 
-                <InputField
-                  type="password"
-                  name="confirmPassword"
-                  placeholder="Re-enter Password"
-                  value={formData.confirmPassword}
-                  error={errors.confirmPassword}
-                />
+                <div className="flex justify-end">
+                  <a href="/forgot-password" className="text-indigo-600 hover:text-indigo-800 text-sm">
+                    Forgot password?
+                  </a>
+                </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-indigo-800 text-white py-3 rounded-md hover:bg-indigo-700 
-                    transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 
-                    focus:ring-offset-2 text-sm sm:text-base"
+                  className={`w-full bg-indigo-800 text-white py-3 rounded-md ${
+                    isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-indigo-700'
+                  } transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 
+                  focus:ring-offset-2 text-sm sm:text-base flex items-center justify-center`}
+                  disabled={isLoading}
                 >
-                  Continue
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    'Log in'
+                  )}
                 </button>
+
+                <div className="text-center mt-4">
+                  <p className="text-gray-600">
+                    Don't have an account? <a href="/signup" className="text-indigo-600 hover:text-indigo-800">Sign up</a>
+                  </p>
+                </div>
               </form>
             </div>
           </div>

@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { educationalQualificationService } from '../services/educationalQualificationService';
+import { subjectService } from '../services/api';
 
 const PersonalDetailsForm = () => {
   const navigate = useNavigate();
@@ -14,6 +16,24 @@ const PersonalDetailsForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [subjects, setSubjects] = useState([]);
+
+  // Fetch subjects on component mount
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const response = await subjectService.getSubjects();
+        if (response.data) {
+          setSubjects(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
+      }
+    };
+
+    fetchSubjects();
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -36,15 +56,8 @@ const PersonalDetailsForm = () => {
       }
     }
     
-    if (!formData.certificate) {
-      newErrors.certificate = 'Please upload your latest degree/certificate';
-    } else {
-      const allowedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
-      const fileExtension = formData.certificate.name.toLowerCase().substring(formData.certificate.name.lastIndexOf('.'));
-      if (!allowedTypes.includes(fileExtension)) {
-        newErrors.certificate = 'Invalid file type. Please upload PDF, DOC, DOCX, JPG, JPEG or PNG';
-      }
-    }
+    // Skip certificate validation as it's not required for the backend
+    // but keep the field in the form
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -72,9 +85,56 @@ const PersonalDetailsForm = () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (validateForm()) {
-      navigate('/slots');
+      setIsSubmitting(true);
+      
+      try {
+        // Get teacher ID from localStorage
+        const teacherId = localStorage.getItem('teacher_id');
+        
+        if (!teacherId) {
+          console.error("Teacher ID not found in localStorage");
+          setErrors({
+            general: "Teacher ID not found. Please complete personal details first."
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Map the qualification to degree_id
+        const degree_id = educationalQualificationService.mapQualificationToDegreeId(
+          formData.EducationalQualification
+        );
+        
+        // Format the qualification data
+        const qualificationData = {
+          degree_id,
+          subject_id: 1, // Default subject ID, can be made selectable in the form
+          yearofPassing: educationalQualificationService.formatYearOfPassing(formData.yearofPassing),
+          schoolName: formData.schoolName,
+          collegeName: formData.collegeName,
+          universityName: formData.universityName
+        };
+        
+        // Submit the qualification
+        await educationalQualificationService.createTeacherQualification(
+          teacherId,
+          qualificationData
+        );
+        
+        // Handle certificate upload separately if implemented in the future
+        
+        // Navigate to the next page
+        navigate('/slots');
+      } catch (error) {
+        console.error('Error submitting educational qualification:', error);
+        setErrors({
+          general: "Error submitting educational qualification. Please try again."
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -101,10 +161,17 @@ const PersonalDetailsForm = () => {
         <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-md">
           <h1 className="text-3xl font-bold text-center mb-8">Educational Details</h1>
 
+          {/* General Error Message */}
+          {errors.general && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+              {errors.general}
+            </div>
+          )}
+
           {/* Form Fields */}
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-600">Choose your Educational Qualification <span className="text-red-500">*</span></label>
                 <select
                   name="EducationalQualification"
@@ -200,21 +267,23 @@ const PersonalDetailsForm = () => {
                     </span>
                   </label>
                 </div>
-                {errors.certificate && <p className="mt-1 text-sm text-red-500">{errors.certificate}</p>}
+                <p className="mt-1 text-xs text-gray-500">* File will be stored locally for now</p>
               </div>
             </div>
             <div className="flex justify-between items-center mt-6">
               <button
                 className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
                 onClick={() => navigate('/details')}
+                disabled={isSubmitting}
               >
                 Back
               </button>
               <button
                 className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                 onClick={handleNext}
+                disabled={isSubmitting}
               >
-                Next
+                {isSubmitting ? 'Submitting...' : 'Next'}
               </button>
             </div>
           </div>

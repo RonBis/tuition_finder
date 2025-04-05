@@ -1,32 +1,83 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { teacherService } from '../services/teacherService';
 
 const PersonalDetailsForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
     mobileNumber: '',
     alternateNumber: '',
     gender: '',
     dateOfBirth: '',
-    maritalStatus: '',
     address: ''
+    // maritalStatus removed
   });
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState(null);
+  const [apiErrorDetails, setApiErrorDetails] = useState(null);
 
-  // Load saved data on component mount
+  // Load saved data on component mount with improved user auth checking
   useEffect(() => {
     const savedData = localStorage.getItem('personaldetails');
     if (savedData) {
       setFormData(JSON.parse(savedData));
     }
-  }, []);
+    
+    // Check if user is logged in with enhanced checks
+    const checkUserAuth = () => {
+      const userId = localStorage.getItem('user_id');
+      const authToken = localStorage.getItem('auth_token');
+      const userData = localStorage.getItem('user_data');
+      
+      console.log('Auth Check:', {
+        userId: userId,
+        hasAuthToken: !!authToken,
+        hasUserData: !!userData
+      });
+      
+      if (!userId) {
+        // Try to extract user ID from user_data if available
+        if (userData) {
+          try {
+            const parsedUserData = JSON.parse(userData);
+            if (parsedUserData && parsedUserData.id) {
+              console.log('Found user ID in user_data:', parsedUserData.id);
+              localStorage.setItem('user_id', parsedUserData.id);
+              return;
+            }
+          } catch (e) {
+            console.error('Error parsing user_data:', e);
+          }
+        }
+        
+        console.warn('No user_id found in localStorage. User might not be logged in.');
+        if (!authToken) {
+          // If no auth token either, redirect to login
+          console.log('No auth token found. Redirecting to login page...');
+          navigate('/');
+        }
+      } else {
+        console.log('User ID found in localStorage:', userId);
+      }
+    };
+    
+    checkUserAuth();
+  }, [navigate]);
 
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.name) {
       newErrors.name = 'Name is required';
+    }
+
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Invalid email address';
     }
 
     if (!formData.mobileNumber) {
@@ -45,10 +96,6 @@ const PersonalDetailsForm = () => {
 
     if (!formData.dateOfBirth) {
       newErrors.dateOfBirth = 'Date of birth is required';
-    }
-
-    if (!formData.maritalStatus) {
-      newErrors.maritalStatus = 'Please select marital status';
     }
 
     if (!formData.address) {
@@ -73,12 +120,79 @@ const PersonalDetailsForm = () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (validateForm()) {
-      // Convert form data to JSON and store it
-      const jsonData = JSON.stringify(formData);
-      localStorage.setItem('personaldetails', jsonData);
-      navigate('/details2');
+      // Enhanced check for user authentication
+      // Check if user is logged in
+      const userId = localStorage.getItem('user_id');
+      const userData = localStorage.getItem('user_data');
+      
+      if (!userId && userData) {
+        // Try to extract user ID from user_data
+        try {
+          const parsedUserData = JSON.parse(userData);
+          if (parsedUserData && parsedUserData.id) {
+            localStorage.setItem('user_id', parsedUserData.id);
+          }
+        } catch (e) {
+          console.error('Error parsing user_data:', e);
+        }
+      }
+      
+      // Check again after potential extraction
+      const finalUserId = localStorage.getItem('user_id');
+      if (!finalUserId) {
+        setApiError('User not logged in. Please log in to continue.');
+        console.log('No user ID found. Redirecting to login page...');
+        navigate('/'); // Redirect to login
+        return;
+      }
+      
+      // Save to localStorage for form persistence
+      localStorage.setItem('personaldetails', JSON.stringify(formData));
+      
+      try {
+        setIsSubmitting(true);
+        setApiError(null);
+        setApiErrorDetails(null);
+        
+        console.log('Submitting form with user_id:', finalUserId);
+        
+        // Submit to API
+        const response = await teacherService.createTeacher(formData);
+        console.log('API response:', response);
+        
+        // If successful, store the teacher ID for future reference
+        if (response.data && response.data.data && response.data.data.id) {
+          localStorage.setItem('teacher_id', response.data.data.id);
+          console.log('Saved teacher_id to localStorage:', response.data.data.id);
+        } else if (response.data && response.data.id) {
+          localStorage.setItem('teacher_id', response.data.id);
+          console.log('Saved teacher_id to localStorage:', response.data.id);
+        }
+        
+        // Navigate to next step
+        navigate('/details2');
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        
+        let errorMessage = 'Failed to save your information. Please try again.';
+        
+        // Check for specific error details from the API
+        if (error.response) {
+          console.log('API Error Response:', error.response.data);
+          errorMessage = error.response.data?.message || errorMessage;
+          
+          // If there are validation errors, display them
+          if (error.response.data?.errors) {
+            setApiErrorDetails(error.response.data.errors);
+          }
+        }
+        
+        setApiError(errorMessage);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -103,6 +217,26 @@ const PersonalDetailsForm = () => {
       <div className="flex-grow flex justify-center items-center">
         <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-md">
           <h1 className="text-3xl font-bold text-center mb-8">Personal Details</h1>
+          
+          {/* API Error Messages */}
+          {apiError && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+              <strong className="font-bold">Error: </strong>
+              <span className="block sm:inline">{apiError}</span>
+              
+              {/* Error Details */}
+              {apiErrorDetails && (
+                <ul className="list-disc pl-5 mt-2">
+                  {Object.entries(apiErrorDetails).map(([field, errors]) => (
+                    <li key={field}>
+                      <strong>{field}:</strong> {Array.isArray(errors) ? errors.join(', ') : errors}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          
           {/* Form Fields */}
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -118,6 +252,19 @@ const PersonalDetailsForm = () => {
                     ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
                 />
                 {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600">Email <span className="text-red-500">*</span></label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter your email"
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
+                    ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                />
+                {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-600">Mobile Number <span className="text-red-500">*</span></label>
@@ -173,23 +320,6 @@ const PersonalDetailsForm = () => {
                 />
                 {errors.dateOfBirth && <p className="mt-1 text-sm text-red-500">{errors.dateOfBirth}</p>}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-600">Marital Status <span className="text-red-500">*</span></label>
-                <select
-                  name="maritalStatus"
-                  value={formData.maritalStatus}
-                  onChange={handleInputChange}
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
-                    ${errors.maritalStatus ? 'border-red-500' : 'border-gray-300'}`}
-                >
-                  <option value="">Choose</option>
-                  <option value="single">Single</option>
-                  <option value="married">Married</option>
-                  <option value="divorced">Divorced</option>
-                  <option value="widowed">Widowed</option>
-                </select>
-                {errors.maritalStatus && <p className="mt-1 text-sm text-red-500">{errors.maritalStatus}</p>}
-              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-600">Address <span className="text-red-500">*</span></label>
@@ -208,14 +338,16 @@ const PersonalDetailsForm = () => {
               <button
                 className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
                 onClick={() => navigate('/role')}
+                disabled={isSubmitting}
               >
                 Back
               </button>
               <button
-                className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                className={`px-6 py-2 ${isSubmitting ? 'bg-indigo-400' : 'bg-indigo-600'} text-white rounded-md hover:bg-indigo-700`}
                 onClick={handleNext}
+                disabled={isSubmitting}
               >
-                Next
+                {isSubmitting ? 'Submitting...' : 'Next'}
               </button>
             </div>
           </div>
