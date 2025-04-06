@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/api'; // Import the auth service
 
@@ -11,6 +11,7 @@ const TuitionFinder = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   // Add refs for input fields
   const inputRefs = {
@@ -18,6 +19,27 @@ const TuitionFinder = () => {
     password: useRef()
   };
   const navigate = useNavigate();
+
+  // Effect to handle navigation after successful login and user ID is available
+  useEffect(() => {
+    if (loginSuccess) {
+      const checkForUserId = async () => {
+        try {
+          await authService.waitForUserId(5000); // Wait up to 5 seconds for user ID
+          navigate('/details');
+        } catch (error) {
+          console.error('Failed to get user ID:', error);
+          setErrors({
+            apiError: 'Login successful but failed to get user information. Please try again.'
+          });
+          setIsLoading(false);
+          setLoginSuccess(false);
+        }
+      };
+      
+      checkForUserId();
+    }
+  }, [loginSuccess, navigate]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -60,29 +82,106 @@ const TuitionFinder = () => {
     }
   };
 
-  // New handleLogin function to encapsulate login logic
+  // Helper function to recursively search for user ID in nested objects
+  const findUserIdInObject = (obj, maxDepth = 3, currentDepth = 0) => {
+    // Prevent too deep recursion
+    if (!obj || typeof obj !== 'object' || currentDepth > maxDepth) {
+      return null;
+    }
+    
+    // Direct check for id
+    if (obj.id && typeof obj.id === 'number') {
+      return obj.id;
+    }
+    
+    // Check for nested id in typical locations
+    if (obj.profile && obj.profile.id) {
+      return obj.profile.id;
+    }
+    
+    // Search in nested objects
+    for (const key in obj) {
+      // Skip certain keys that are unlikely to contain user data
+      if (['token_type', 'expires_in', 'created_at', 'updated_at'].includes(key)) {
+        continue;
+      }
+      
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        // If the key is 'user' or contains 'user', prioritize this path
+        if (key === 'user' || key.includes('user') || key === 'profile') {
+          if (obj[key].id) {
+            return obj[key].id;
+          }
+        }
+        
+        // Recursive search
+        const result = findUserIdInObject(obj[key], maxDepth, currentDepth + 1);
+        if (result) {
+          return result;
+        }
+      }
+    }
+    
+    return null;
+  };
+
+  // Enhanced handleLogin function with more robust error handling
   const handleLogin = async (credentials) => {
     try {
       const response = await authService.signIn(credentials);
       
       // Make sure to save the auth token
-      localStorage.setItem('auth_token', response.data.token);
-      
-      // Save the user_id
-      if (response.data && response.data.user && response.data.user.id) {
-        localStorage.setItem('user_id', response.data.user.id);
-        console.log('Saved user_id to localStorage:', response.data.user.id);
+      if (response.data && response.data.token) {
+        localStorage.setItem('auth_token', response.data.token);
+      } else if (response.data && response.data.refresh_token) {
+        // Some APIs return refresh_token instead of token
+        localStorage.setItem('auth_token', response.data.refresh_token);
       } else {
-        console.error('User ID not found in response:', response.data);
+        throw new Error('No auth token received');
       }
       
-      // Navigate to the dashboard
-      navigate('/details');
+      // Search for user ID in multiple possible locations based on the API response structure
+      let userId = null;
+      
+      // Check for direct id in response
+      if (response.data && response.data.id) {
+        userId = response.data.id;
+        console.log('Found direct user_id in response:', userId);
+      }
+      // Check for id in user object
+      else if (response.data && response.data.user && response.data.user.id) {
+        userId = response.data.user.id;
+        console.log('Found user_id in user object:', userId);
+      }
+      // Check for specific user_id field
+      else if (response.data && response.data.user_id) {
+        userId = response.data.user_id;
+        console.log('Found specific user_id field:', userId);
+      }
+      // Check in profile object (as seen in your console log)
+      else if (response.data && response.data.profile && response.data.profile.id) {
+        userId = response.data.profile.id;
+        console.log('Found user_id in profile:', userId);
+      }
+      // Deep search for id field (recursive function)
+      else {
+        userId = findUserIdInObject(response.data);
+        if (userId) {
+          console.log('Found user_id through deep search:', userId);
+        }
+      }
+      
+      if (userId) {
+        localStorage.setItem('user_id', userId);
+        setLoginSuccess(true);
+        return true;
+      } else {
+        console.error('Could not find user ID in response:', response.data);
+        throw new Error('User ID not found in response');
+      }
     } catch (error) {
       console.error('Login error:', error);
-      setErrors({
-        apiError: 'Invalid credentials. Please try again.'
-      });
+      throw error;
     }
   };
 
@@ -97,7 +196,7 @@ const TuitionFinder = () => {
           ? { email: formData.emailOrPhone, password: formData.password }
           : { phone: formData.emailOrPhone, password: formData.password };
         
-        // Use the new handleLogin function
+        // Use the enhanced handleLogin function
         await handleLogin(credentials);
       } catch (error) {
         console.error('Login error:', error);
@@ -123,10 +222,9 @@ const TuitionFinder = () => {
         } else {
           // Something happened in setting up the request
           setErrors({
-            apiError: 'An error occurred. Please try again.'
+            apiError: error.message || 'An error occurred. Please try again.'
           });
         }
-      } finally {
         setIsLoading(false);
       }
     }
@@ -293,7 +391,7 @@ const TuitionFinder = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Processing...
+                      {loginSuccess ? 'Preparing your dashboard...' : 'Processing...'}
                     </>
                   ) : (
                     'Log in'
