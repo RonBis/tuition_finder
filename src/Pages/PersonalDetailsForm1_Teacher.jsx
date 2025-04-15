@@ -2,6 +2,78 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { teacherService } from '../services/teacherService';
 
+// Helper function to ensure userId is stored persistently
+function ensureUserIdPersistence() {
+  // Try to get from localStorage first
+  let userId = localStorage.getItem('user_id');
+  
+  // If found in localStorage, use it
+  if (userId) {
+    return userId;
+  }
+  
+  // Try to extract from user_data in localStorage
+  const userData = localStorage.getItem('user_data');
+  if (userData) {
+    try {
+      const parsedUserData = JSON.parse(userData);
+      if (parsedUserData && parsedUserData.id) {
+        userId = parsedUserData.id;
+        
+        // Save to localStorage for future use
+        localStorage.setItem('user_id', userId);
+        console.log('Saved user_id to localStorage from user_data:', userId);
+        
+        return userId;
+      }
+    } catch (e) {
+      console.error('Error parsing user_data:', e);
+    }
+  }
+  
+  // Try session storage as fallback
+  userId = sessionStorage.getItem('user_id');
+  if (userId) {
+    // Save to localStorage for persistence
+    localStorage.setItem('user_id', userId);
+    console.log('Saved user_id to localStorage from sessionStorage:', userId);
+    
+    return userId;
+  }
+  
+  // Additional fallback - check for any auth token which might be related
+  const authToken = localStorage.getItem('auth_token');
+  if (authToken) {
+    // If there's a JWT token, try to decode it to get user info
+    try {
+      // Extract payload from JWT (middle part between dots)
+      const base64Url = authToken.split('.')[1];
+      if (base64Url) {
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        const payload = JSON.parse(jsonPayload);
+        if (payload && payload.user_id) {
+          userId = payload.user_id;
+          
+          // Save to localStorage
+          localStorage.setItem('user_id', userId);
+          console.log('Saved user_id to localStorage from auth token:', userId);
+          
+          return userId;
+        }
+      }
+    } catch (e) {
+      console.error('Error decoding auth token:', e);
+    }
+  }
+  
+  console.warn('Could not find user_id in any storage location');
+  return null;
+}
+
 const PersonalDetailsForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -12,7 +84,6 @@ const PersonalDetailsForm = () => {
     gender: '',
     dateOfBirth: '',
     address: ''
-    // maritalStatus removed
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,46 +92,35 @@ const PersonalDetailsForm = () => {
 
   // Load saved data on component mount with improved user auth checking
   useEffect(() => {
+    // Ensure user ID persistence immediately on component mount
+    const userId = ensureUserIdPersistence();
+    
+    if (userId) {
+      console.log('User ID confirmed in localStorage:', userId);
+    } else {
+      console.warn('No user ID could be found or extracted');
+    }
+    
+    // Load saved form data if available
     const savedData = localStorage.getItem('personaldetails');
     if (savedData) {
       setFormData(JSON.parse(savedData));
     }
     
-    // Check if user is logged in with enhanced checks
+    // More thorough authentication check
     const checkUserAuth = () => {
       const userId = localStorage.getItem('user_id');
       const authToken = localStorage.getItem('auth_token');
-      const userData = localStorage.getItem('user_data');
       
       console.log('Auth Check:', {
         userId: userId,
-        hasAuthToken: !!authToken,
-        hasUserData: !!userData
+        hasAuthToken: !!authToken
       });
       
-      if (!userId) {
-        // Try to extract user ID from user_data if available
-        if (userData) {
-          try {
-            const parsedUserData = JSON.parse(userData);
-            if (parsedUserData && parsedUserData.id) {
-              console.log('Found user ID in user_data:', parsedUserData.id);
-              localStorage.setItem('user_id', parsedUserData.id);
-              return;
-            }
-          } catch (e) {
-            console.error('Error parsing user_data:', e);
-          }
-        }
-        
-        console.warn('No user_id found in localStorage. User might not be logged in.');
-        if (!authToken) {
-          // If no auth token either, redirect to login
-          console.log('No auth token found. Redirecting to login page...');
-          navigate('/');
-        }
-      } else {
-        console.log('User ID found in localStorage:', userId);
+      if (!userId && !authToken) {
+        console.warn('No user_id or auth_token found. User might not be logged in.');
+        console.log('Redirecting to login page...');
+        navigate('/');
       }
     };
     
@@ -122,29 +182,13 @@ const PersonalDetailsForm = () => {
 
   const handleNext = async () => {
     if (validateForm()) {
-      // Enhanced check for user authentication
-      // Check if user is logged in
-      const userId = localStorage.getItem('user_id');
-      const userData = localStorage.getItem('user_data');
+      // Ensure user ID is available
+      const userId = ensureUserIdPersistence();
       
-      if (!userId && userData) {
-        // Try to extract user ID from user_data
-        try {
-          const parsedUserData = JSON.parse(userData);
-          if (parsedUserData && parsedUserData.id) {
-            localStorage.setItem('user_id', parsedUserData.id);
-          }
-        } catch (e) {
-          console.error('Error parsing user_data:', e);
-        }
-      }
-      
-      // Check again after potential extraction
-      const finalUserId = localStorage.getItem('user_id');
-      if (!finalUserId) {
+      if (!userId) {
         setApiError('User not logged in. Please log in to continue.');
         console.log('No user ID found. Redirecting to login page...');
-        navigate('/'); // Redirect to login
+        navigate('/'); 
         return;
       }
       
@@ -156,7 +200,7 @@ const PersonalDetailsForm = () => {
         setApiError(null);
         setApiErrorDetails(null);
         
-        console.log('Submitting form with user_id:', finalUserId);
+        console.log('Submitting form with user_id:', userId);
         
         // Submit to API
         const response = await teacherService.createTeacher(formData);

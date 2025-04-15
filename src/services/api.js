@@ -24,13 +24,20 @@ api.interceptors.response.use(
   error => {
     if (error.response && error.response.status === 401) {
       // Redirect to signup page on unauthorized responses
-      localStorage.removeItem('auth_token'); // Clear invalid token
-      localStorage.removeItem('user_id'); // Also clear user ID
+      clearAuthData(); // Use our centralized function
       window.location.href = '/';
     }
     return Promise.reject(error);
   }
 );
+
+// Centralized function to clear all auth-related data
+const clearAuthData = () => {
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('user_id');
+  localStorage.removeItem('role_id');
+  // Add any other auth-related items that might be stored
+};
 
 // Utility function to wait for user ID to be available
 const waitForUserId = (maxWaitTimeMs = 10000, checkIntervalMs = 100) => {
@@ -57,7 +64,7 @@ const waitForUserId = (maxWaitTimeMs = 10000, checkIntervalMs = 100) => {
   });
 };
 
-// Helper function to recursively find user ID in response
+// Improved helper function to recursively find user ID in response
 const findUserIdInObject = (obj, maxDepth = 3, currentDepth = 0) => {
   // Prevent too deep recursion
   if (!obj || typeof obj !== 'object' || currentDepth > maxDepth) {
@@ -95,10 +102,28 @@ const findUserIdInObject = (obj, maxDepth = 3, currentDepth = 0) => {
   return null;
 };
 
+// MODIFIED: Set a fixed role ID (1) instead of fetching it from the server
+const setFixedRoleId = (userId) => {
+  if (!userId) {
+    console.error('Cannot set role ID without a user ID');
+    return null;
+  }
+  
+  // Always set role ID to 1 (teacher role)
+  const roleId = '1';
+  console.log(`Setting fixed role ID: ${roleId} for user ${userId}`);
+  localStorage.setItem('role_id', roleId);
+  return roleId;
+};
+
 // API endpoints
 export const authService = {
+  // Sign in with complete localStorage reset and fixed role ID
   signIn: async (credentials) => {
     try {
+      // IMPORTANT: Clear all localStorage data BEFORE making the request
+      localStorage.clear();
+      
       const response = await api.post('/users/tokens/sign_in', credentials);
       console.log('Response from sign_in:', response.data);
       
@@ -136,59 +161,211 @@ export const authService = {
       }
       
       if (userId) {
-        localStorage.setItem('user_id', userId);
+        localStorage.setItem('user_id', userId.toString());
+        
+        // MODIFIED: Set the fixed role ID (1) instead of fetching it
+        setFixedRoleId(userId);
       }
       
       return response;
     } catch (error) {
       console.error('Sign in error:', error);
+      // Ensure localStorage is cleared on failure
+      clearAuthData();
       throw error;
     }
   },
   
   adminSignIn: async (credentials) => {
-    const response = await api.post('/admin-sign-in', credentials);
-    
-    // Store admin user ID in local storage after successful login
-    if (response.data && response.data.user_id) {
-      localStorage.setItem('user_id', response.data.user_id);
-    } else if (response.data && response.data.user && response.data.user.id) {
-      localStorage.setItem('user_id', response.data.user.id);
+    try {
+      // Clear everything before admin sign in
+      localStorage.clear();
+      
+      const response = await api.post('/admin-sign-in', credentials);
+      
+      // Store admin token if available
+      if (response.data?.token) {
+        localStorage.setItem('auth_token', response.data.token);
+      }
+      
+      // Store admin user ID in local storage after successful login
+      if (response.data && response.data.user_id) {
+        localStorage.setItem('user_id', response.data.user_id.toString());
+      } else if (response.data && response.data.user && response.data.user.id) {
+        localStorage.setItem('user_id', response.data.user.id.toString());
+      }
+      
+      // MODIFIED: Set the fixed role ID (1) for admin as well
+      const userId = localStorage.getItem('user_id');
+      if (userId) {
+        setFixedRoleId(userId);
+      }
+      
+      return response;
+    } catch (error) {
+      clearAuthData();
+      throw error;
     }
-    
-    return response;
   },
   
-  signUp: (userData) => api.post('/users/signup', userData),
+  // Updated signUp method with proper localStorage clearing and fixed role ID
+  signUp: async (userData) => {
+    try {
+      // IMPORTANT: Clear ALL localStorage data before registration
+      localStorage.clear();
+      
+      console.log('Sending registration data:', userData);
+      const response = await api.post('/api/v1/users', userData);
+      console.log('Signup response:', response.data);
+      
+      // Store auth token if provided
+      if (response.data?.token) {
+        localStorage.setItem('auth_token', response.data.token);
+      }
+      
+      // Store user ID
+      let userId = null;
+      
+      if (response.data?.id) {
+        userId = response.data.id;
+      } else if (response.data?.user?.id) {
+        userId = response.data.user.id;
+      } else if (response.data?.data?.id) {
+        userId = response.data.data.id;
+      } else if (response.data?.data?.user?.id) {
+        userId = response.data.data.user.id;
+      } else {
+        // Try to find the ID using the recursive helper
+        userId = findUserIdInObject(response.data);
+      }
+      
+      if (userId) {
+        localStorage.setItem('user_id', userId.toString());
+        
+        // MODIFIED: Set the fixed role ID (1) for new signups
+        setFixedRoleId(userId);
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Sign up error:', error);
+      // Clear any partial data on error
+      clearAuthData();
+      throw error;
+    }
+  },
+  
+  // Sign out method to clear all auth data
+  signOut: () => {
+    localStorage.clear();
+    // Optionally call a server endpoint to invalidate the token
+    // return api.post('/users/tokens/sign_out');
+  },
+  
   getActivityLog: () => api.get('/Activity-Log'),
   
   // Helper method to get the current user ID
   getCurrentUserId: () => localStorage.getItem('user_id'),
   
+  // Helper method to get the current role ID
+  getCurrentRoleId: () => {
+    // MODIFIED: If role ID doesn't exist, set it to 1 and return
+    const roleId = localStorage.getItem('role_id');
+    if (!roleId) {
+      const userId = localStorage.getItem('user_id');
+      if (userId) {
+        return setFixedRoleId(userId);
+      }
+    }
+    return roleId;
+  },
+  
   // Method that waits for user ID to be available
   waitForUserId: (maxWaitTimeMs = 10000, checkIntervalMs = 100) => waitForUserId(maxWaitTimeMs, checkIntervalMs),
+  
+  // Method to ensure role ID is available (always sets it to 1)
+  ensureRoleId: async () => {
+    try {
+      // First check if role ID is already in localStorage
+      const roleId = localStorage.getItem('role_id');
+      if (roleId) {
+        console.log('Role ID already exists in localStorage:', roleId);
+        return roleId;
+      }
+      
+      // If not, get the user ID and set the fixed role ID
+      const userId = localStorage.getItem('user_id');
+      if (userId) {
+        console.log('No role ID found. Setting fixed role ID (1)...');
+        return setFixedRoleId(userId);
+      }
+      
+      console.error('Cannot set role ID without a user ID');
+      return null;
+    } catch (error) {
+      console.error('Error ensuring role ID:', error);
+      return null;
+    }
+  },
   
   // Method that ensures a user is logged in before proceeding
   requireAuth: async (redirectPath = '/') => {
     try {
       await waitForUserId();
+      // MODIFIED: Always ensure the role ID is set to 1
+      const userId = localStorage.getItem('user_id');
+      if (userId && !localStorage.getItem('role_id')) {
+        setFixedRoleId(userId);
+      }
       return true;
     } catch (error) {
       window.location.href = redirectPath;
       return false;
     }
+  },
+  
+  // Helper for handling post-login redirection (always assumes role ID 1 - teacher)
+  handleRoleBasedRedirection: async (navigate, setIsLoading, setErrors) => {
+    try {
+      // Wait for user ID to be available
+      const userId = await waitForUserId(5000);
+      console.log('User ID confirmed:', userId);
+      
+      // MODIFIED: Ensure role ID is set to 1
+      if (!localStorage.getItem('role_id')) {
+        setFixedRoleId(userId);
+      }
+      
+      // Always redirect to teacher dashboard (role ID 1)
+      navigate('/teacher-dashboard');
+      
+      if (setIsLoading) {
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Error during redirection:', error);
+      if (setErrors) {
+        setErrors({
+          apiError: 'Login successful but failed to get user information. Please try again.'
+        });
+      }
+      if (setIsLoading) {
+        setIsLoading(false);
+      }
+    }
   }
 };
 
 export const userService = {
-  getUsers: () => api.get('/user/index'),
-  createUser: (userData) => api.post('/user/create', userData),
+  getUsers: () => api.get('/api/v1/users'),
+  getUserById: (id) => api.get(`/api/v1/users/${id}`),
+  createUser: (userData) => api.post('/api/v1/users', userData),
   
   // Get current user with waiting capability
   getCurrentUser: async (waitTime = 10000) => {
     try {
       const userId = await waitForUserId(waitTime);
-      return api.get(`/user/${userId}`);
+      return api.get(`/api/v1/users/${userId}`);
     } catch (error) {
       return Promise.reject(error);
     }
@@ -217,7 +394,7 @@ export const dashboardService = {
 };
 
 export const subjectService = {
-  getSubjects: () => api.get('/subjects')
+  getSubjects: () => api.get('/api/v1/subjects')
 };
 
 export const employerService = {
@@ -226,6 +403,46 @@ export const employerService = {
 
 export const qualificationService = {
   getQualifications: () => api.get('/educational-qualification')
+};
+
+// Sample implementation of handlePostLoginRedirection function for CombinedAuthForm component
+export const handlePostLoginRedirection = async (navigate, setIsLoading, setErrors) => {
+  try {
+    // Use the new centralized method for role-based redirection
+    await authService.handleRoleBasedRedirection(navigate, setIsLoading, setErrors);
+  } catch (error) {
+    console.error('Error during post-login redirection:', error);
+    if (setErrors) {
+      setErrors({
+        apiError: 'An unexpected error occurred during login. Please try again.'
+      });
+    }
+    if (setIsLoading) {
+      setIsLoading(false);
+    }
+  }
+};
+
+// For use in components that need user information
+export const checkAuthAndFetchUserData = async (setUser, setLoading, navigate) => {
+  try {
+    setLoading(true);
+    // Ensure the user is authenticated
+    await authService.requireAuth('/');
+    
+    // Ensure role ID is available (set to 1)
+    await authService.ensureRoleId();
+    
+    // Get the current user data
+    const response = await userService.getCurrentUser();
+    setUser(response.data);
+    setLoading(false);
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    setLoading(false);
+    // Redirect to login if authentication failed
+    navigate('/');
+  }
 };
 
 export default api;

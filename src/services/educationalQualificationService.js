@@ -2,11 +2,11 @@ import api from './api';
 
 export const educationalQualificationService = {
   // Get all qualifications
-  getQualifications: () => api.get('/api/v1/educational_qualifications'),
+  getQualifications: () => api.get('api/v1/teacher_educational_qualifications'),
 
   // Get qualifications for a specific teacher
   getTeacherQualifications: (teacherId) => 
-    api.get(`/api/v1/teachers/${teacherId}/educational_qualifications`),
+    api.get(`/api/v1/${teacherId}/teacher_educational_qualifications`),
   
   // Create educational qualification for a teacher
   createTeacherQualification: (teacherId, qualificationData) => {

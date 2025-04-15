@@ -13,7 +13,7 @@ const Slots = () => {
   
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const times = ['Morning', 'Afternoon', 'Evening'];
-  const types = ['Individual', 'Group', 'Any'];
+  const types = ['Individual', 'All_Group', 'Any'];
   
   // Map days to week_day number for the API
   const dayToNumber = {

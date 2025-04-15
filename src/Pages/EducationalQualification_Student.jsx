@@ -1,27 +1,46 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { studentEducationalQualificationService } from '../services/studentEducationalQualificationService';
 
 const PersonalDetailsForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
+    educationType: 'School',
     schoolName: '',
+    classStandard: '',
     collegeName: '',
     universityName: '',
-    EducationalQualification: ''
+    workingProfessional: ''
   });
 
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.EducationalQualification) {
-      newErrors.EducationalQualification = 'Please select your educational qualification';
+    if (!formData.educationType) {
+      newErrors.educationType = 'Please select your education type';
     }
     
-    if (!formData.schoolName) {
+    if (formData.educationType === 'School' && !formData.schoolName) {
       newErrors.schoolName = 'School name is required';
+    }
+    
+    if (formData.educationType === 'School' && !formData.classStandard) {
+      newErrors.classStandard = 'Class/Standard is required';
+    }
+
+    if (formData.educationType === 'College' && !formData.collegeName) {
+      newErrors.collegeName = 'College name is required';
+    }
+    
+    if (formData.educationType === 'University' && !formData.universityName) {
+      newErrors.universityName = 'University name is required';
+    }
+    
+    if (formData.educationType === 'Working' && !formData.workingProfessional) {
+      newErrors.workingProfessional = 'Professional information is required';
     }
 
     setErrors(newErrors);
@@ -43,9 +62,42 @@ const PersonalDetailsForm = () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (validateForm()) {
-      navigate('/subject');
+      setIsSubmitting(true);
+      
+      try {
+        // Get student ID from localStorage
+        const studentId = localStorage.getItem('student_id') || localStorage.getItem('user_id');
+        
+        if (!studentId) {
+          console.error("Student ID not found in localStorage");
+          setErrors({
+            general: "Student ID not found. Please complete personal details first."
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Format the education data using the service helper method
+        const educationData = studentEducationalQualificationService.formatStudentEducationData(formData);
+        
+        // Submit the qualification
+        await studentEducationalQualificationService.createStudentQualification(
+          studentId,
+          educationData
+        );
+        
+        // Navigate to the next page
+        navigate('/subject');
+      } catch (error) {
+        console.error('Error submitting educational qualification:', error);
+        setErrors({
+          general: "Error submitting educational qualification. Please try again."
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -69,87 +121,152 @@ const PersonalDetailsForm = () => {
 
       {/* Form */}
       <div className="flex-grow flex justify-center items-center p-4 w-full">
-        <div className="w-full max-w-4xl bg-white p-4 md:p-8 rounded-lg shadow-md mx-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-8">Educational Details</h1>
+        <div className="w-full max-w-4xl bg-white p-6 md:p-8 rounded-lg shadow-md mx-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-8">Education</h1>
 
-          {/* Form Fields */}
-          <div className="space-y-4 md:space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Choose your Educational Qualification <span className="text-red-500">*</span></label>
-                <select
-                  name="EducationalQualification"
-                  value={formData.EducationalQualification}
-                  onChange={handleInputChange}
-                  className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
-                    ${errors.EducationalQualification ? 'border-red-500' : 'border-gray-300'}`}
-                >
-                  <option value="">Choose</option>
-                  <option value="No formal education">No formal education</option>
-                  <option value="Primary education">Primary education</option>
-                  <option value="Secondary education or high school">Secondary education or high school</option>
-                  <option value="GED">GED</option>
-                  <option value="Vocational qualification">Vocational qualification</option>
-                  <option value="Bachelor's degree">Bachelor's degree</option>
-                  <option value="Master's degree">Master's degree</option>
-                  <option value="Doctorate or higher">Doctorate or higher</option>
-                </select>
-                {errors.EducationalQualification && <p className="mt-1 text-sm text-red-500">{errors.EducationalQualification}</p>}
-              </div>
-              <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-600 mb-1">School Name <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  name="schoolName"
-                  value={formData.schoolName}
-                  onChange={handleInputChange}
-                  placeholder="Enter School Name"
-                  className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
-                    ${errors.schoolName ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {errors.schoolName && <p className="mt-1 text-sm text-red-500">{errors.schoolName}</p>}
-              </div>
-              <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-600 mb-1">College Name </label>
-                <input
-                  type="text"
-                  name="collegeName"
-                  value={formData.collegeName}
-                  onChange={handleInputChange}
-                  placeholder="Enter College Name"
-                  className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
-                    ${errors.collegeName ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {errors.collegeName && <p className="mt-1 text-sm text-red-500">{errors.collegeName}</p>}
-              </div>
-              <div className="col-span-1">
-                <label className="block text-sm font-medium text-gray-600 mb-1">University Name</label>
-                <input
-                  type="text"
-                  name="universityName"
-                  value={formData.universityName}
-                  onChange={handleInputChange}
-                  placeholder="Enter University Name"
-                  className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
-                    ${errors.universityName ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {errors.universityName && <p className="mt-1 text-sm text-red-500">{errors.universityName}</p>}
-              </div>
+          {/* General Error Message */}
+          {errors.general && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+              {errors.general}
             </div>
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
-              <button
-                className="w-full sm:w-auto px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300 text-base md:text-sm"
-                onClick={() => navigate('/studentdetails1')}
+          )}
+
+          {/* Form Fields based on the mockup */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {/* I am in dropdown */}
+            <div className="col-span-1">
+              <label className="block text-sm font-medium text-gray-600 mb-1">I am in <span className="text-red-500">*</span></label>
+              <select
+                name="educationType"
+                value={formData.educationType}
+                onChange={handleInputChange}
+                className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
+                  ${errors.educationType ? 'border-red-500' : 'border-gray-300'}`}
               >
-                Back
-              </button>
-              <button
-                className="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-base md:text-sm"
-                onClick={handleNext}
-              >
-                Next
-              </button>
+                <option value="School">School</option>
+                <option value="College">College</option>
+                <option value="University">University</option>
+                <option value="Working">Working Professional</option>
+              </select>
+              {errors.educationType && <p className="mt-1 text-sm text-red-500">{errors.educationType}</p>}
             </div>
+
+            {/* School Name */}
+            <div className="col-span-1">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                School Name 
+                {formData.educationType === 'School' && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                type="text"
+                name="schoolName"
+                value={formData.schoolName}
+                onChange={handleInputChange}
+                placeholder="Input"
+                className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
+                  ${errors.schoolName ? 'border-red-500' : 'border-gray-300'}`}
+              />
+              {errors.schoolName && <p className="mt-1 text-sm text-red-500">{errors.schoolName}</p>}
+            </div>
+
+            {/* Class/Standard */}
+            <div className="col-span-1">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Class/Standard
+                {formData.educationType === 'School' && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                type="text"
+                name="classStandard"
+                value={formData.classStandard}
+                onChange={handleInputChange}
+                placeholder="Input"
+                className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
+                  ${errors.classStandard ? 'border-red-500' : 'border-gray-300'}`}
+              />
+              {errors.classStandard && <p className="mt-1 text-sm text-red-500">{errors.classStandard}</p>}
+            </div>
+
+            {/* College Name */}
+            <div className="col-span-1">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                College Name
+                {formData.educationType === 'College' && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                type="text"
+                name="collegeName"
+                value={formData.collegeName}
+                onChange={handleInputChange}
+                placeholder="Input"
+                className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border 
+                  ${errors.collegeName ? 'border-red-500' : 'border-gray-300'} 
+                  rounded-md focus:ring-indigo-500 focus:border-indigo-500`}
+              />
+              {errors.collegeName && <p className="mt-1 text-sm text-red-500">{errors.collegeName}</p>}
+            </div>
+
+            {/* University */}
+            <div className="col-span-1">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                University
+                {formData.educationType === 'University' && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                type="text"
+                name="universityName"
+                value={formData.universityName}
+                onChange={handleInputChange}
+                placeholder="Input"
+                className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border
+                  ${errors.universityName ? 'border-red-500' : 'border-gray-300'}
+                  rounded-md focus:ring-indigo-500 focus:border-indigo-500`}
+              />
+              {errors.universityName && <p className="mt-1 text-sm text-red-500">{errors.universityName}</p>}
+            </div>
+
+            {/* Other (Working professional) */}
+            <div className="col-span-1">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Other (Working professional)
+                {formData.educationType === 'Working' && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                type="text"
+                name="workingProfessional"
+                value={formData.workingProfessional}
+                onChange={handleInputChange}
+                placeholder="you are working as?"
+                className={`mt-1 block w-full px-3 py-2 text-base md:text-sm border
+                  ${errors.workingProfessional ? 'border-red-500' : 'border-gray-300'}
+                  rounded-md focus:ring-indigo-500 focus:border-indigo-500`}
+              />
+              {errors.workingProfessional && <p className="mt-1 text-sm text-red-500">{errors.workingProfessional}</p>}
+            </div>
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-8">
+            <button
+              className="px-8 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 flex items-center gap-2 text-base"
+              onClick={() => navigate('/studentdetails1')}
+              disabled={isSubmitting}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+              Back
+            </button>
+            <button
+              className="px-8 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center gap-2 text-base"
+              onClick={handleNext}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Submitting...' : 'Continue'}
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>

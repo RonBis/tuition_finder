@@ -126,7 +126,7 @@ const PersonalDetailsForm = () => {
         // Handle certificate upload separately if implemented in the future
         
         // Navigate to the next page
-        navigate('/slots');
+        navigate('/teachersubject');
       } catch (error) {
         console.error('Error submitting educational qualification:', error);
         setErrors({
