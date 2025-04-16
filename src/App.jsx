@@ -17,6 +17,7 @@ import TeacherSubject from "./Pages/TeacherSubject";
 import Dashboard from "./Pages/TutorDashboard"
 import Admin from "./Pages/AdminDashboard";
 import Admin_Teachers from "./Pages/AdminDashboard_Teachers";
+import Adminsignin from "./Pages/AdminSignin";
 const App = () => {
   return (
     <div>
@@ -39,6 +40,7 @@ const App = () => {
         <Route path='/Admin' element={<Admin/>} />
         <Route path='/Admin_Teacher' element={<Admin_Teachers/>}/>
         <Route path='/teacherSubject' element={<TeacherSubject/>} />
+        <Route path='/adminsignin' element={<Adminsignin/>} />
         </Routes>
     </div>
   );

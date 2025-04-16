@@ -9,6 +9,7 @@ const Slots = () => {
   const [hasValidSelection, setHasValidSelection] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const navigate = useNavigate();
   
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -167,7 +168,13 @@ const Slots = () => {
       }
       
       console.log('Schedule saved successfully');
-      navigate('/tutor'); // Navigate on success
+      setShowSuccessMessage(true);
+      
+      // Redirect to home page after showing success message
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+      
     } catch (error) {
       console.error('Error saving schedule:', error);
       console.error('Error details:', error.response?.data);
@@ -209,6 +216,12 @@ const Slots = () => {
           {error && (
             <div className="mb-6 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
               {error}
+            </div>
+          )}
+          
+          {showSuccessMessage && (
+            <div className="mb-6 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+              User registered successfully! Redirecting...
             </div>
           )}
           
@@ -277,7 +290,7 @@ const Slots = () => {
                   ? 'bg-indigo-800 text-white hover:bg-indigo-700' 
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
-              disabled={!hasValidSelection || isSubmitting}
+              disabled={!hasValidSelection || isSubmitting || showSuccessMessage}
               onClick={handleSubmit}
             >
               {isSubmitting ? 'Saving...' : 'Create Profile'}

@@ -13,8 +13,11 @@ import {
   BellIcon,
   UserIcon
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  
   const busyHoursData = [
     { name: '8am-12pm', school: 40, college: 24, working: 35 },
     { name: '12pm-4pm', school: 30, college: 40, working: 22 },
@@ -86,7 +89,7 @@ const Dashboard = () => {
         <nav className="space-y-2 flex-1">
           {[
             { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard', active: true },
-            { icon: <Users className="w-5 h-5" />, label: 'Teachers' },
+            { icon: <Users className="w-5 h-5" />, label: 'Teachers', onClick: () => navigate('/Admin_Teacher') },
             { icon: <MessageSquare className="w-5 h-5" />, label: 'Enquiries' },
             { icon: <Building2 className="w-5 h-5" />, label: 'Recruiters' },
             { icon: <BriefcaseIcon className="w-5 h-5" />, label: 'Jobs' },
@@ -100,6 +103,7 @@ const Dashboard = () => {
               className={`flex items-center space-x-3 p-2 rounded cursor-pointer ${
                 item.active ? 'bg-indigo-800' : 'hover:bg-indigo-600'
               }`}
+              onClick={item.onClick}
             >
               {item.icon}
               <span>{item.label}</span>

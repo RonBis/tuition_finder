@@ -1,50 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/api';
+import axios from 'axios';
 
-const CombinedAuthForm = () => {
-  // Combined form data for both login and signup
+const AdminAuthForm = () => {
+  // Form data for admin login and signup
   const [formData, setFormData] = useState({
     // Login fields
-    emailOrPhone: '',
+    email: '',
     password: '',
     
     // Additional signup fields
     agreeToTerms: false,
-    user_role_id: 1 // Default to teacher role (1)
+    user_role_id: 4 // Default to admin role (4)
   });
   
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
+  const [message, setMessage] = useState(null);
   
   const navigate = useNavigate();
 
-  // Clear localStorage on component mount to ensure clean state
+  // Clear localStorage when component mounts
   useEffect(() => {
     localStorage.clear();
   }, []);
 
-  // Handle redirection after successful login
-  const handlePostLoginRedirection = async () => {
-    try {
-      // Use the centralized redirection handler from api.js
-      await authService.handleRoleBasedRedirection(navigate, setIsLoading, setErrors);
-    } catch (error) {
-      console.error('Error during redirection:', error);
-      setErrors({
-        apiError: 'Login successful but failed to get user information. Please try again.'
-      });
-      setIsLoading(false);
-    }
-  };
-
   const validateLogin = () => {
     const newErrors = {};
     
-    if (!formData.emailOrPhone) {
-      newErrors.emailOrPhone = 'This field is required';
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
     }
     
     if (!formData.password) {
@@ -58,13 +45,11 @@ const CombinedAuthForm = () => {
   const validateSignup = () => {
     const newErrors = {};
     
-    // Email/Phone validation
-    if (!formData.emailOrPhone) {
-      newErrors.emailOrPhone = 'Email or phone is required';
-    } else if (formData.emailOrPhone.includes('@') && !/\S+@\S+\.\S+/.test(formData.emailOrPhone)) {
-      newErrors.emailOrPhone = 'Please enter a valid email address';
-    } else if (!formData.emailOrPhone.includes('@') && !/^\d{10}$/.test(formData.emailOrPhone)) {
-      newErrors.emailOrPhone = 'Please enter a valid 10-digit phone number';
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
     }
     
     // Password validation
@@ -102,54 +87,67 @@ const CombinedAuthForm = () => {
     setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
-  // Updated handleLoginSubmit function to store the full response
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     if (validateLogin()) {
       try {
         setIsLoading(true);
         
-        // Create credentials object based on input type
-        const credentials = formData.emailOrPhone.includes('@') 
-          ? { email: formData.emailOrPhone, password: formData.password }
-          : { phone: formData.emailOrPhone, password: formData.password };
+        // Create the API instance for authentication
+        const api = axios.create({
+          baseURL: 'http://localhost:3001',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
         
-        console.log('Sending login credentials:', credentials);
+        // Send login request to the backend
+        const response = await api.post('/admin_users/tokens/sign_in', {
+          email: formData.email,
+          password: formData.password
+        });
         
-        // Use the authService to handle login
-        const response = await authService.signIn(credentials);
-        console.log('Login successful:', response);
+        console.log('Login response:', response.data);
         
-        // The full response is already stored in localStorage by authService.signIn
-        // You can access it anytime with authService.getFullAuthResponse()
+        // Clear any previous auth data
+        localStorage.clear();
         
-        // Check profile directly from login response
-        const authResponse = authService.getFullAuthResponse();
-        if (authResponse && authResponse.profile !== null) {
-          navigate('/dashboard');
-        } else {
-          navigate('/details');
+        // Store the received token
+        if (response.data?.token) {
+          localStorage.setItem('auth_token', response.data.token);
+        } else if (response.data?.refresh_token) {
+          localStorage.setItem('auth_token', response.data.refresh_token);
         }
+        
+        // Store user ID
+        if (response.data?.resource_owner?.id) {
+          localStorage.setItem('user_id', response.data.resource_owner.id.toString());
+        }
+        
+        // Store role ID (admin)
+        localStorage.setItem('role_id', '4');
+        
+        // Navigate to admin dashboard
+        navigate('/admin');
         
         setIsLoading(false);
       } catch (error) {
         console.error('Login error:', error);
         
         // Handle different types of errors
-        if (error.response) {
-          console.log('Error response data:', error.response.data);
-          
-          if (error.response.data && error.response.data.message) {
-            setErrors({ apiError: error.response.data.message });
-          } else if (error.response.status === 401) {
-            setErrors({ apiError: 'Invalid email/phone or password. Please try again.' });
-          } else {
-            setErrors({ apiError: `Authentication failed (${error.response.status}). Please try again.` });
-          }
-        } else if (error.request) {
-          setErrors({ apiError: 'No response from server. Please try again later.' });
+        if (error.response && error.response.status === 401) {
+          setErrors({
+            apiError: 'Invalid credentials. Please check your email and password.'
+          });
+        } else if (error.response && error.response.data && error.response.data.error) {
+          setErrors({
+            apiError: error.response.data.error
+          });
         } else {
-          setErrors({ apiError: error.message || 'Login failed. Please try again.' });
+          setErrors({
+            apiError: 'An error occurred during login. Please try again.'
+          });
         }
         
         setIsLoading(false);
@@ -163,109 +161,66 @@ const CombinedAuthForm = () => {
       try {
         setIsLoading(true);
         
-        // Get role ID from form data
-        const userRoleId = parseInt(formData.user_role_id, 10);
+        // Create the API instance for authentication
+        const api = axios.create({
+          baseURL: 'http://localhost:3001',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
         
-        // Determine if email or phone was provided
-        const isEmail = formData.emailOrPhone.includes('@');
-        
-        const userData = {
-          password: formData.password,
-          user_role_id: userRoleId
+        // Prepare the admin registration data
+        const adminData = {
+          admin_user: {
+            email: formData.email,
+            password: formData.password
+          }
         };
         
-        // Add either email or phone based on input
-        if (isEmail) {
-          userData.email = formData.emailOrPhone;
-        } else {
-          userData.phone = formData.emailOrPhone;
-        }
+        // Send signup request to the backend
+        const response = await api.post('/admin_users', adminData);
         
-        console.log('Sending registration data:', userData);
+        // Clear any previous auth data
+        localStorage.clear();
         
-        // Use the authService for signup
-        const response = await authService.signUp(userData);
-        console.log('Signup successful:', response.data);
-        
-        // After successful signup, switch to login mode
+        // Switch to login mode after successful registration
         setAuthMode('login');
-        
-        // Clear form but keep the email/phone for convenience
-        const emailOrPhone = formData.emailOrPhone;
         setFormData({
-          emailOrPhone: emailOrPhone,
-          password: '',
-          agreeToTerms: false,
-          user_role_id: 1
+          ...formData,
+          password: ''
         });
         
         // Show success message
-        setErrors({
-          apiSuccess: 'Registration successful! Please log in with your credentials.'
+        setMessage({
+          type: 'success',
+          text: 'Admin registration successful! Please log in with your credentials.'
         });
         
         setIsLoading(false);
-        
       } catch (error) {
         console.error('Signup error:', error);
         
-        // Enhanced error handling
-        if (error.response) {
-          console.log('Error response data:', error.response.data);
-          
-          if (error.response.data && error.response.data.message) {
-            setErrors({
-              apiError: error.response.data.message
-            });
-          } else if (error.response.data && error.response.data.errors) {
-            // Format API validation errors
-            const apiErrors = {};
+        // Handle different types of errors
+        if (error.response && error.response.data && error.response.data.errors) {
+          // Combine all error messages
+          const errorMessages = Object.entries(error.response.data.errors)
+            .map(([key, messages]) => `${key}: ${messages.join(', ')}`)
+            .join('; ');
             
-            // Handle nested errors or array errors
-            const processErrors = (errors, prefix = '') => {
-              Object.entries(errors).forEach(([key, value]) => {
-                const fieldKey = prefix ? `${prefix}.${key}` : key;
-                
-                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                  // Handle nested objects
-                  processErrors(value, fieldKey);
-                } else {
-                  // Handle arrays or direct values
-                  const errorMsg = Array.isArray(value) ? value[0] : value;
-                  
-                  // Map API field names to form field names
-                  let formField = key;
-                  if (key === 'email' || key === 'phone') {
-                    formField = 'emailOrPhone';
-                  }
-                  
-                  apiErrors[formField] = errorMsg;
-                }
-              });
-            };
-            
-            processErrors(error.response.data.errors);
-            
-            // If no specific field errors were mapped, show a general error
-            if (Object.keys(apiErrors).length === 0) {
-              apiErrors.apiError = 'Validation failed. Please check your information.';
-            }
-            
-            setErrors(apiErrors);
-          } else {
-            setErrors({
-              apiError: `Registration failed (${error.response.status}). Please try again.`
-            });
-          }
-        } else if (error.request) {
           setErrors({
-            apiError: 'No response from server. Please try again later.'
+            apiError: errorMessages
+          });
+        } else if (error.response && error.response.data && error.response.data.error) {
+          setErrors({
+            apiError: error.response.data.error
           });
         } else {
           setErrors({
-            apiError: error.message || 'An error occurred. Please try again.'
+            apiError: 'Registration failed. Please try again.'
           });
         }
+        
         setIsLoading(false);
       }
     }
@@ -281,10 +236,11 @@ const CombinedAuthForm = () => {
   };
 
   const toggleAuthMode = () => {
-    // Clear localStorage when switching modes to prevent conflicts
+    // Clear localStorage when switching modes
     localStorage.clear();
     setAuthMode(prevMode => prevMode === 'login' ? 'signup' : 'login');
     setErrors({});
+    setMessage(null);
   };
 
   return (
@@ -309,18 +265,21 @@ const CombinedAuthForm = () => {
           {/* Left side */}
           <div className="w-full lg:w-1/2 text-white text-center lg:text-left">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 leading-tight sm:leading-snug">
-              Helping students achieve the education they deserve
+              Admin Portal
             </h1>
+            <p className="text-xl sm:text-2xl">
+              Manage all aspects of the Tuition Finder platform
+            </p>
           </div>
 
           {/* Right side */}
           <div className="w-full lg:w-1/2">
             <div className="bg-white rounded-lg p-6 sm:p-8 shadow-lg w-full max-w-md mx-auto">
               <h2 className="text-xl sm:text-2xl font-bold mb-2">
-                {authMode === 'login' ? 'Welcome to Tuition Finder' : 'Create your account'}
+                {authMode === 'login' ? 'Admin Access' : 'Create Admin Account'}
               </h2>
               <p className="text-gray-600 mb-6">
-                {authMode === 'login' ? 'Log in to your account' : 'Join Tuition Finder to connect with teachers and students'}
+                {authMode === 'login' ? 'Log in to access admin dashboard' : 'Create new administrator account'}
               </p>
               
               {errors.apiError && (
@@ -329,30 +288,30 @@ const CombinedAuthForm = () => {
                 </div>
               )}
               
-              {errors.apiSuccess && (
+              {message && message.type === 'success' && (
                 <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
-                  {errors.apiSuccess}
+                  {message.text}
                 </div>
               )}
               
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Email/Phone Input */}
+                {/* Email Input */}
                 <div className="space-y-1">
                   <div className="relative">
                     <input
                       type="text"
-                      name="emailOrPhone"
-                      placeholder="Enter Mobile No. or Email Id"
+                      name="email"
+                      placeholder="Enter Admin Email"
                       className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 
-                        ${errors.emailOrPhone ? 'border-red-500 focus:ring-red-200' : 'focus:ring-indigo-200 focus:border-indigo-500'}`}
-                      value={formData.emailOrPhone}
+                        ${errors.email ? 'border-red-500 focus:ring-red-200' : 'focus:ring-indigo-200 focus:border-indigo-500'}`}
+                      value={formData.email}
                       onChange={handleInputChange}
                       autoComplete="username"
                     />
-                    {formData.emailOrPhone && (
+                    {formData.email && (
                       <button
                         type="button"
-                        onClick={() => handleClear('emailOrPhone')}
+                        onClick={() => handleClear('email')}
                         className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100"
                       >
                         <svg 
@@ -369,8 +328,8 @@ const CombinedAuthForm = () => {
                       </button>
                     )}
                   </div>
-                  {errors.emailOrPhone && (
-                    <p className="text-red-500 text-sm">{errors.emailOrPhone}</p>
+                  {errors.email && (
+                    <p className="text-red-500 text-sm">{errors.email}</p>
                   )}
                 </div>
 
@@ -380,7 +339,7 @@ const CombinedAuthForm = () => {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       name="password"
-                      placeholder="Enter password"
+                      placeholder="Enter admin password"
                       className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 
                         ${errors.password ? 'border-red-500 focus:ring-red-200' : 'focus:ring-indigo-200 focus:border-indigo-500'}`}
                       value={formData.password}
@@ -448,7 +407,7 @@ const CombinedAuthForm = () => {
                 {/* Additional signup fields */}
                 {authMode === 'signup' && (
                   <>
-                    {/* Role selection dropdown */}
+                    {/* Role selection dropdown - fixed to admin */}
                     <div className="space-y-1">
                       <div className="relative">
                         <select
@@ -457,10 +416,9 @@ const CombinedAuthForm = () => {
                           onChange={handleInputChange}
                           className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 
                             focus:ring-indigo-200 focus:border-indigo-500"
+                          disabled
                         >
-                          <option value="1">Teacher</option>
-                          <option value="2" disabled>Student</option>
-                          <option value="3" disabled>Job Seeker</option>
+                          <option value="4">Administrator</option>
                         </select>
                       </div>
                     </div>
@@ -490,7 +448,7 @@ const CombinedAuthForm = () => {
 
                 {authMode === 'login' && (
                   <div className="flex justify-end">
-                    <a href="/forgot-password" className="text-indigo-600 hover:text-indigo-800 text-sm">
+                    <a href="/admin-reset-password" className="text-indigo-600 hover:text-indigo-800 text-sm">
                       Forgot password?
                     </a>
                   </div>
@@ -513,15 +471,15 @@ const CombinedAuthForm = () => {
                       Processing...
                     </>
                   ) : (
-                    authMode === 'login' ? 'Log in' : 'Sign up'
+                    authMode === 'login' ? 'Admin Login' : 'Register Admin'
                   )}
                 </button>
 
                 <div className="text-center mt-4">
                   <p className="text-gray-600">
                     {authMode === 'login' 
-                      ? <>Don't have an account? <button type="button" onClick={toggleAuthMode} className="text-indigo-600 hover:text-indigo-800">Sign up</button></>
-                      : <>Already have an account? <button type="button" onClick={toggleAuthMode} className="text-indigo-600 hover:text-indigo-800">Log in</button></>
+                      ? <>Need admin access? <button type="button" onClick={toggleAuthMode} className="text-indigo-600 hover:text-indigo-800">Sign up</button></>
+                      : <>Already an admin? <button type="button" onClick={toggleAuthMode} className="text-indigo-600 hover:text-indigo-800">Log in</button></>
                     }
                   </p>
                 </div>
@@ -534,4 +492,4 @@ const CombinedAuthForm = () => {
   );
 };
 
-export default CombinedAuthForm;
+export default AdminAuthForm;

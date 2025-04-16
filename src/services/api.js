@@ -36,6 +36,7 @@ const clearAuthData = () => {
   localStorage.removeItem('auth_token');
   localStorage.removeItem('user_id');
   localStorage.removeItem('role_id');
+  localStorage.removeItem('auth_response'); // Added to remove the full response
   // Add any other auth-related items that might be stored
 };
 
@@ -127,6 +128,9 @@ export const authService = {
       const response = await api.post('/users/tokens/sign_in', credentials);
       console.log('Response from sign_in:', response.data);
       
+      // Store the full response data in localStorage
+      localStorage.setItem('auth_response', JSON.stringify(response.data));
+      
       // Store auth token
       if (response.data?.token) {
         localStorage.setItem('auth_token', response.data.token);
@@ -150,6 +154,9 @@ export const authService = {
       } else if (response.data?.profile?.id) {
         userId = response.data.profile.id;
         console.log('Found user_id in profile object:', userId);
+      } else if (response.data?.resource_owner?.id) {
+        userId = response.data.resource_owner.id;
+        console.log('Found user_id in resource_owner object:', userId);
       } else {
         // Try to find the ID using the recursive helper
         userId = findUserIdInObject(response.data);
@@ -182,6 +189,9 @@ export const authService = {
       localStorage.clear();
       
       const response = await api.post('/admin-sign-in', credentials);
+      
+      // Store the full response data in localStorage
+      localStorage.setItem('auth_response', JSON.stringify(response.data));
       
       // Store admin token if available
       if (response.data?.token) {
@@ -217,6 +227,9 @@ export const authService = {
       console.log('Sending registration data:', userData);
       const response = await api.post('/api/v1/users', userData);
       console.log('Signup response:', response.data);
+      
+      // Store the full response data in localStorage
+      localStorage.setItem('auth_response', JSON.stringify(response.data));
       
       // Store auth token if provided
       if (response.data?.token) {
@@ -279,6 +292,12 @@ export const authService = {
     }
     return roleId;
   },
+
+  // Helper method to get the full auth response
+  getFullAuthResponse: () => {
+    const authResponse = localStorage.getItem('auth_response');
+    return authResponse ? JSON.parse(authResponse) : null;
+  },
   
   // Method that waits for user ID to be available
   waitForUserId: (maxWaitTimeMs = 10000, checkIntervalMs = 100) => waitForUserId(maxWaitTimeMs, checkIntervalMs),
@@ -324,20 +343,41 @@ export const authService = {
     }
   },
   
-  // Helper for handling post-login redirection (always assumes role ID 1 - teacher)
+  // Helper for handling post-login redirection based on profile existence
   handleRoleBasedRedirection: async (navigate, setIsLoading, setErrors) => {
     try {
       // Wait for user ID to be available
       const userId = await waitForUserId(5000);
       console.log('User ID confirmed:', userId);
       
-      // MODIFIED: Ensure role ID is set to 1
+      // Ensure role ID is set to 1
       if (!localStorage.getItem('role_id')) {
         setFixedRoleId(userId);
       }
       
-      // Always redirect to teacher dashboard (role ID 1)
-      navigate('/teacher-dashboard');
+      // Get the current user data
+      try {
+        const response = await api.get(`/api/v1/users/${userId}`);
+        console.log('User data for redirection:', response.data);
+        
+        // Simple profile null check
+        const userData = response.data;
+        const hasProfile = userData && userData.profile !== null;
+        
+        console.log('Profile exists:', !!hasProfile);
+        
+        if (hasProfile) {
+          console.log('Redirecting to dashboard');
+          navigate('/dashboard');
+        } else {
+          console.log('Redirecting to details');
+          navigate('/details');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        // Default to details if unable to determine profile status
+        navigate('/details');
+      }
       
       if (setIsLoading) {
         setIsLoading(false);
@@ -408,7 +448,7 @@ export const qualificationService = {
 // Sample implementation of handlePostLoginRedirection function for CombinedAuthForm component
 export const handlePostLoginRedirection = async (navigate, setIsLoading, setErrors) => {
   try {
-    // Use the new centralized method for role-based redirection
+    // Use the new centralized method for redirection based on profile existence
     await authService.handleRoleBasedRedirection(navigate, setIsLoading, setErrors);
   } catch (error) {
     console.error('Error during post-login redirection:', error);
