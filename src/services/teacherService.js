@@ -57,7 +57,10 @@ export const teacherService = {
         "gender": teacherData.gender,
         "date_of_birth": formattedDOB,
         "is_active": true,
-        "user_id": userId
+        "user_id": userId,
+        // Add latitude and longitude if provided
+        "latitude": teacherData.latitude || null,
+        "longitude": teacherData.longitude || null
       }
     };
     
@@ -90,7 +93,10 @@ export const teacherService = {
         "alt_mobile": teacherData.alternateNumber || "",
         "gender": teacherData.gender,
         "date_of_birth": formattedDOB,
-        "is_active": true
+        "is_active": true,
+        // Add latitude and longitude if provided
+        "latitude": teacherData.latitude || null,
+        "longitude": teacherData.longitude || null
       }
     };
     

@@ -83,12 +83,15 @@ const PersonalDetailsForm = () => {
     alternateNumber: '',
     gender: '',
     dateOfBirth: '',
-    address: ''
+    address: '',
+    latitude: '',
+    longitude: ''
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [apiErrorDetails, setApiErrorDetails] = useState(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   // Load saved data on component mount with improved user auth checking
   useEffect(() => {
@@ -162,6 +165,15 @@ const PersonalDetailsForm = () => {
       newErrors.address = 'Address is required';
     }
 
+    // Latitude and longitude are optional, but if provided must be valid
+    if (formData.latitude && !/^-?([0-8]?[0-9]|90)(\.[0-9]{1,8})?$/.test(formData.latitude)) {
+      newErrors.latitude = 'Invalid latitude format (must be between -90 and 90)';
+    }
+    
+    if (formData.longitude && !/^-?((1?[0-7]?|[0-9]?)[0-9]|180)(\.[0-9]{1,8})?$/.test(formData.longitude)) {
+      newErrors.longitude = 'Invalid longitude format (must be between -180 and 180)';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -177,6 +189,46 @@ const PersonalDetailsForm = () => {
         ...prev,
         [name]: ''
       }));
+    }
+  };
+
+  const getCurrentLocation = () => {
+    setIsGettingLocation(true);
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          setFormData(prev => ({
+            ...prev,
+            latitude: latitude.toFixed(6),
+            longitude: longitude.toFixed(6)
+          }));
+          
+          console.log(`Location obtained: ${latitude}, ${longitude}`);
+          setIsGettingLocation(false);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setErrors(prev => ({
+            ...prev,
+            location: `Error getting location: ${error.message}`
+          }));
+          setIsGettingLocation(false);
+        },
+        { 
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      setErrors(prev => ({
+        ...prev,
+        location: 'Geolocation is not supported by this browser'
+      }));
+      setIsGettingLocation(false);
     }
   };
 
@@ -378,6 +430,64 @@ const PersonalDetailsForm = () => {
               />
               {errors.address && <p className="mt-1 text-sm text-red-500">{errors.address}</p>}
             </div>
+            
+            {/* Location Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-600">Latitude</label>
+                <div className="flex">
+                  <input
+                    type="text"
+                    name="latitude"
+                    value={formData.latitude}
+                    onChange={handleInputChange}
+                    placeholder="Enter latitude"
+                    className={`mt-1 block w-full px-3 py-2 border rounded-l-md focus:ring-indigo-500 focus:border-indigo-500 
+                      ${errors.latitude ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                </div>
+                {errors.latitude && <p className="mt-1 text-sm text-red-500">{errors.latitude}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600">Longitude</label>
+                <div className="flex">
+                  <input
+                    type="text"
+                    name="longitude"
+                    value={formData.longitude}
+                    onChange={handleInputChange}
+                    placeholder="Enter longitude"
+                    className={`mt-1 block w-full px-3 py-2 border rounded-l-md focus:ring-indigo-500 focus:border-indigo-500 
+                      ${errors.longitude ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                </div>
+                {errors.longitude && <p className="mt-1 text-sm text-red-500">{errors.longitude}</p>}
+              </div>
+            </div>
+            
+            {/* Get Current Location Button */}
+            <div>
+              <button
+                type="button"
+                onClick={getCurrentLocation}
+                disabled={isGettingLocation}
+                className={`w-full px-4 py-2 ${isGettingLocation ? 'bg-gray-400' : 'bg-green-600'} text-white rounded-md hover:bg-green-700 flex items-center justify-center`}
+              >
+                {isGettingLocation ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Getting Location...
+                  </>
+                ) : (
+                  'Get Current Location'
+                )}
+              </button>
+              {errors.location && <p className="mt-1 text-sm text-red-500">{errors.location}</p>}
+            </div>
+            
             <div className="flex justify-between items-center mt-6">
               <button
                 className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
