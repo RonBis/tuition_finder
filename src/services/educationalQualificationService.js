@@ -1,12 +1,12 @@
 import api from './api';
 
 export const educationalQualificationService = {
-  // Get all qualifications
-  getQualifications: () => api.get('api/v1/teacher_educational_qualifications'),
+  // Get all qualifications/degrees from the backend
+  getDegrees: () => api.get('/api/v1/degrees'),
 
   // Get qualifications for a specific teacher
   getTeacherQualifications: (teacherId) => 
-    api.get(`/api/v1/${teacherId}/teacher_educational_qualifications`),
+    api.get(`/api/v1/teachers/${teacherId}/teacher_educational_qualifications`),
   
   // Create educational qualification for a teacher
   createTeacherQualification: (teacherId, qualificationData) => {
@@ -14,7 +14,7 @@ export const educationalQualificationService = {
     const formattedData = {
       "teacher_educational_qualification": {
         "teacher_id": teacherId,
-        "degree_id": qualificationData.degree_id || 1,
+        "degree_id": qualificationData.degree_id,
         "subject_id": qualificationData.subject_id || 1,
         "year_of_passing": qualificationData.yearofPassing,
         "school_name": qualificationData.schoolName,
@@ -30,7 +30,7 @@ export const educationalQualificationService = {
   updateTeacherQualification: (qualificationId, qualificationData) => {
     const formattedData = {
       "teacher_educational_qualification": {
-        "degree_id": qualificationData.degree_id || 1,
+        "degree_id": qualificationData.degree_id,
         "subject_id": qualificationData.subject_id || 1,
         "year_of_passing": qualificationData.yearofPassing,
         "school_name": qualificationData.schoolName,
@@ -46,28 +46,12 @@ export const educationalQualificationService = {
   deleteTeacherQualification: (qualificationId) => 
     api.delete(`/api/v1/teacher_educational_qualifications/${qualificationId}`),
     
-  // Map frontend qualification value to backend degree_id
-  mapQualificationToDegreeId: (qualification) => {
-    const qualificationMap = {
-      "No formal education": 1,
-      "Primary education": 2,
-      "Secondary education or high school": 3,
-      "GED": 4,
-      "Vocational qualification": 5,
-      "Bachelor's degree": 6,
-      "Master's degree": 7,
-      "Doctorate or higher": 8
-    };
-    
-    return qualificationMap[qualification] || 1;
-  },
-  
   // Format date from YYYY-MM-DD to DD-MM-YYYY
   formatYearOfPassing: (dateString) => {
     if (!dateString) return "";
     
     // Check if the date is already in the expected format
-    if (dateString.includes('/')) return dateString;
+    if (dateString.includes('-') && dateString.split('-')[0].length === 2) return dateString;
     
     try {
       const date = new Date(dateString);

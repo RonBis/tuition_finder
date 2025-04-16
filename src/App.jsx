@@ -16,6 +16,7 @@ import JobListing from "./Pages/JobListing";
 import TeacherSubject from "./Pages/TeacherSubject";
 import Dashboard from "./Pages/TutorDashboard"
 import Admin from "./Pages/AdminDashboard";
+import Admin_Teachers from "./Pages/AdminDashboard_Teachers";
 const App = () => {
   return (
     <div>
@@ -36,6 +37,7 @@ const App = () => {
         <Route path='/joblist' element={<JobListing/>} />
         <Route path='/dashboard' element={<Dashboard/>} />
         <Route path='/Admin' element={<Admin/>} />
+        <Route path='/Admin_Teacher' element={<Admin_Teachers/>}/>
         <Route path='/teacherSubject' element={<TeacherSubject/>} />
         </Routes>
     </div>
