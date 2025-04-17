@@ -92,6 +92,48 @@ const PersonalDetailsForm = () => {
   const [apiError, setApiError] = useState(null);
   const [apiErrorDetails, setApiErrorDetails] = useState(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [useSameMobile, setUseSameMobile] = useState(false);
+
+  // Function to get current location
+  const fetchCurrentLocation = () => {
+    setIsGettingLocation(true);
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          setFormData(prev => ({
+            ...prev,
+            latitude: latitude.toFixed(6),
+            longitude: longitude.toFixed(6)
+          }));
+          
+          console.log(`Location obtained: ${latitude}, ${longitude}`);
+          setIsGettingLocation(false);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setErrors(prev => ({
+            ...prev,
+            location: `Error getting location: ${error.message}`
+          }));
+          setIsGettingLocation(false);
+        },
+        { 
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      setErrors(prev => ({
+        ...prev,
+        location: 'Geolocation is not supported by this browser'
+      }));
+      setIsGettingLocation(false);
+    }
+  };
 
   // Load saved data on component mount with improved user auth checking
   useEffect(() => {
@@ -128,7 +170,28 @@ const PersonalDetailsForm = () => {
     };
     
     checkUserAuth();
+    
+    // Auto-fetch location when component mounts
+    fetchCurrentLocation();
   }, [navigate]);
+
+  // Handle checkbox change for alternate number
+  const handleSameMobileCheckbox = (e) => {
+    const isChecked = e.target.checked;
+    setUseSameMobile(isChecked);
+    
+    if (isChecked) {
+      setFormData(prev => ({
+        ...prev,
+        alternateNumber: prev.mobileNumber
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        alternateNumber: ''
+      }));
+    }
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -184,51 +247,20 @@ const PersonalDetailsForm = () => {
       ...prev,
       [name]: value
     }));
+    
+    // If mobile number changes and useSameMobile is checked, update alternate number too
+    if (name === 'mobileNumber' && useSameMobile) {
+      setFormData(prev => ({
+        ...prev,
+        alternateNumber: value
+      }));
+    }
+    
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
       }));
-    }
-  };
-
-  const getCurrentLocation = () => {
-    setIsGettingLocation(true);
-    
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          
-          setFormData(prev => ({
-            ...prev,
-            latitude: latitude.toFixed(6),
-            longitude: longitude.toFixed(6)
-          }));
-          
-          console.log(`Location obtained: ${latitude}, ${longitude}`);
-          setIsGettingLocation(false);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setErrors(prev => ({
-            ...prev,
-            location: `Error getting location: ${error.message}`
-          }));
-          setIsGettingLocation(false);
-        },
-        { 
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
-      );
-    } else {
-      setErrors(prev => ({
-        ...prev,
-        location: 'Geolocation is not supported by this browser'
-      }));
-      setIsGettingLocation(false);
     }
   };
 
@@ -376,7 +408,19 @@ const PersonalDetailsForm = () => {
                 {errors.mobileNumber && <p className="mt-1 text-sm text-red-500">{errors.mobileNumber}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600">Alternate Number </label>
+                <label className="block text-sm font-medium text-gray-600">Whatsapp Number </label>
+                <div className="flex items-center mb-2">
+                  <input
+                    type="checkbox"
+                    id="sameMobileCheckbox"
+                    checked={useSameMobile}
+                    onChange={handleSameMobileCheckbox}
+                    className="mr-2"
+                  />
+                  <label htmlFor="sameMobileCheckbox" className="text-sm text-gray-600">
+                    Same as mobile number
+                  </label>
+                </div>
                 <input
                   type="tel"
                   name="alternateNumber"
@@ -385,6 +429,7 @@ const PersonalDetailsForm = () => {
                   placeholder="Enter alternate number"
                   className={`mt-1 block w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
                     ${errors.alternateNumber ? 'border-red-500' : 'border-gray-300'}`}
+                  disabled={useSameMobile}
                 />
                 {errors.alternateNumber && <p className="mt-1 text-sm text-red-500">{errors.alternateNumber}</p>}
               </div>
@@ -442,7 +487,7 @@ const PersonalDetailsForm = () => {
                     value={formData.latitude}
                     onChange={handleInputChange}
                     placeholder="Enter latitude"
-                    className={`mt-1 block w-full px-3 py-2 border rounded-l-md focus:ring-indigo-500 focus:border-indigo-500 
+                    className={`mt-1 block w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
                       ${errors.latitude ? 'border-red-500' : 'border-gray-300'}`}
                   />
                 </div>
@@ -457,7 +502,7 @@ const PersonalDetailsForm = () => {
                     value={formData.longitude}
                     onChange={handleInputChange}
                     placeholder="Enter longitude"
-                    className={`mt-1 block w-full px-3 py-2 border rounded-l-md focus:ring-indigo-500 focus:border-indigo-500 
+                    className={`mt-1 block w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
                       ${errors.longitude ? 'border-red-500' : 'border-gray-300'}`}
                   />
                 </div>
@@ -465,28 +510,17 @@ const PersonalDetailsForm = () => {
               </div>
             </div>
             
-            {/* Get Current Location Button */}
-            <div>
-              <button
-                type="button"
-                onClick={getCurrentLocation}
-                disabled={isGettingLocation}
-                className={`w-full px-4 py-2 ${isGettingLocation ? 'bg-gray-400' : 'bg-green-600'} text-white rounded-md hover:bg-green-700 flex items-center justify-center`}
-              >
-                {isGettingLocation ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Getting Location...
-                  </>
-                ) : (
-                  'Get Current Location'
-                )}
-              </button>
-              {errors.location && <p className="mt-1 text-sm text-red-500">{errors.location}</p>}
-            </div>
+            {/* Location status message */}
+            {isGettingLocation && (
+              <div className="text-sm text-gray-600 flex items-center">
+                <svg className="animate-spin mr-2 h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Getting your current location...
+              </div>
+            )}
+            {errors.location && <p className="mt-1 text-sm text-red-500">{errors.location}</p>}
             
             <div className="flex justify-between items-center mt-6">
               <button

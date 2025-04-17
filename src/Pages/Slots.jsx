@@ -5,7 +5,6 @@ import { slotsService } from '../services/slot-service';
 const Slots = () => {
   const [selectedSlots, setSelectedSlots] = useState({});
   const [selectedTimes, setSelectedTimes] = useState({});
-  const [selectedTypes, setSelectedTypes] = useState({});
   const [hasValidSelection, setHasValidSelection] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -14,7 +13,6 @@ const Slots = () => {
   
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const times = ['Morning', 'Afternoon', 'Evening'];
-  const types = ['Individual', 'All_Group', 'Any'];
   
   // Map days to week_day number for the API
   const dayToNumber = {
@@ -42,41 +40,18 @@ const Slots = () => {
     }));
   };
 
-  const handleTypeSelect = (day, type) => {
-    // If Any is selected, deselect Individual and Group
-    if (type === 'Any') {
-      setSelectedTypes(prev => {
-        const newTypes = {...prev};
-        newTypes[`${day}-Individual`] = false;
-        newTypes[`${day}-Group`] = false;
-        newTypes[`${day}-Any`] = !prev[`${day}-Any`];
-        return newTypes;
-      });
-    } 
-    // If Individual or Group is selected, deselect Any
-    else {
-      setSelectedTypes(prev => {
-        const newTypes = {...prev};
-        newTypes[`${day}-Any`] = false;
-        newTypes[`${day}-${type}`] = !prev[`${day}-${type}`];
-        return newTypes;
-      });
-    }
-  };
-
   useEffect(() => {
     checkValidSelection();
-  }, [selectedSlots, selectedTimes, selectedTypes]);
+  }, [selectedSlots, selectedTimes]);
 
   const checkValidSelection = () => {
-    // Check if at least one vertical selection exists (day + time + type)
+    // Check if at least one vertical selection exists (day + time)
     let valid = false;
     days.forEach(day => {
       times.forEach(time => {
         const hasDay = selectedSlots[day];
         const hasTime = selectedTimes[`${day}-${time}`];
-        const hasType = types.some(type => selectedTypes[`${day}-${type}`]);
-        if (hasDay && hasTime && hasType) {
+        if (hasDay && hasTime) {
           valid = true;
         }
       });
@@ -98,26 +73,21 @@ const Slots = () => {
       // Group time slots by preferred_group for this day
       const groupedSlots = {};
       
-      // For each day, find the selected times and types
+      // For each day, find the selected times
       times.forEach(time => {
         if (!selectedTimes[`${day}-${time}`]) return; // Skip times that aren't selected
         
-        // Find the selected type for this day
-        types.forEach(type => {
-          if (selectedTypes[`${day}-${type}`]) {
-            const preferredGroup = type.toLowerCase();
-            
-            if (!groupedSlots[preferredGroup]) {
-              groupedSlots[preferredGroup] = {
-                preferred_group: preferredGroup,
-                time_of_day: []
-              };
-            }
-            
-            // Add this time to the group's time_of_day array
-            groupedSlots[preferredGroup].time_of_day.push(time.toLowerCase());
-          }
-        });
+        const preferredGroup = "individual"; // Default to individual
+        
+        if (!groupedSlots[preferredGroup]) {
+          groupedSlots[preferredGroup] = {
+            preferred_group: preferredGroup,
+            time_of_day: []
+          };
+        }
+        
+        // Add this time to the group's time_of_day array
+        groupedSlots[preferredGroup].time_of_day.push(time.toLowerCase());
       });
       
       if (Object.keys(groupedSlots).length > 0) {
@@ -211,7 +181,7 @@ const Slots = () => {
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-4xl">
           <h2 className="text-2xl font-bold mb-6">Date & Time</h2>
-          <p className="text-gray-600 mb-6">Choose Days, time & batch type you prefer to teach</p>
+          <p className="text-gray-600 mb-6">Choose Days and time you prefer to teach</p>
           
           {error && (
             <div className="mb-6 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -253,22 +223,6 @@ const Slots = () => {
                       }`}
                     >
                       {time}
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="flex flex-wrap justify-center md:justify-start space-x-2">
-                  {types.map(type => (
-                    <button
-                      key={`${day}-${type}`}
-                      onClick={() => handleTypeSelect(day, type)}
-                      className={`px-2 py-1 md:px-4 md:py-2 rounded-full transition-colors ${
-                        selectedTypes[`${day}-${type}`]
-                          ? 'bg-[#D8D9FF]'
-                          : 'bg-gray-100'
-                      }`}
-                    >
-                      {type}
                     </button>
                   ))}
                 </div>

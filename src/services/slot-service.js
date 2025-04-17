@@ -8,11 +8,17 @@ export const slotsService = {
   // Get a specific schedule by ID
   getScheduleById: (scheduleId) => api.get(`/api/v1/teacher_schedules/${scheduleId}`),
   
-  // Create a new schedule - wrapping the data in a teacher_schedule object
-  createSchedule: (scheduleData) => api.post('/api/v1/teacher_schedules', { teacher_schedule: scheduleData }),
+  // Create a new schedule - accepting already formatted data
+  createSchedule: (formattedData) => {
+    console.log('Sending schedule data to API:', formattedData);
+    return api.post('/api/v1/teacher_schedules', formattedData);
+  },
   
   // Update an existing schedule
-  updateSchedule: (scheduleId, scheduleData) => api.put(`/api/v1/teacher_schedules/${scheduleId}`, { teacher_schedule: scheduleData }),
+  updateSchedule: (scheduleId, scheduleData) => 
+    api.put(`/api/v1/teacher_schedules/${scheduleId}`, { 
+      teacher_schedule: scheduleData 
+    }),
   
   // Delete a schedule
   deleteSchedule: (scheduleId) => api.delete(`/api/v1/teacher_schedules/${scheduleId}`)

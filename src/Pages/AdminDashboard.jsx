@@ -88,7 +88,7 @@ const Dashboard = () => {
         </div>
         <nav className="space-y-2 flex-1">
           {[
-            { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard', active: true },
+            { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard', active: true, onClick: () => navigate('/admin') },
             { icon: <Users className="w-5 h-5" />, label: 'Teachers', onClick: () => navigate('/Admin_Teacher') },
             { icon: <MessageSquare className="w-5 h-5" />, label: 'Enquiries' },
             { icon: <Building2 className="w-5 h-5" />, label: 'Recruiters' },

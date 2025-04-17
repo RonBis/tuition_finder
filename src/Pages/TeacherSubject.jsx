@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { subjectService } from '../services/subjectService';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
 
 export default function TuitionFinderForm() {
   const navigate = useNavigate(); // Initialize navigate function
+  const fileInputRef = useRef(null); // Reference for file input
   const [formData, setFormData] = useState({
     teachLocation: true,
     teachSchools: true,
@@ -14,13 +15,15 @@ export default function TuitionFinderForm() {
     selectedSubjects: [],
     teachOnline: true,
     teachOffline: false,
-    teachingMedium: "Bengali" // Default value
+    teachingMedium: "Bengali", // Default value
+    experienceDocument: null // Added for file upload
   });
   
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Teaching medium options
   const teachingMediumOptions = [
@@ -65,12 +68,35 @@ export default function TuitionFinderForm() {
     fetchSubjects();
   }, []);
 
+  useEffect(() => {
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event) => {
+      if (dropdownOpen && !event.target.closest('.subject-dropdown')) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
     });
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setFormData({
+        ...formData,
+        experienceDocument: e.target.files[0]
+      });
+    }
   };
 
   const handleRadioChange = (name, value) => {
@@ -80,11 +106,16 @@ export default function TuitionFinderForm() {
     });
   };
 
-  const handleSubjectChange = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-    setFormData({
-      ...formData,
-      selectedSubjects: selectedOptions
+  const handleSubjectChange = (subjectId) => {
+    setFormData(prevData => {
+      const updatedSubjects = prevData.selectedSubjects.includes(subjectId)
+        ? prevData.selectedSubjects.filter(id => id !== subjectId)
+        : [...prevData.selectedSubjects, subjectId];
+      
+      return {
+        ...prevData,
+        selectedSubjects: updatedSubjects
+      };
     });
   };
 
@@ -183,6 +214,10 @@ export default function TuitionFinderForm() {
     }
   };
 
+  const handleBack = () => {
+    navigate('/details2');
+  };
+
   return (
     <div className="fixed inset-0 bg-indigo-50 flex flex-col overflow-hidden">
       {/* Header */}
@@ -228,10 +263,10 @@ export default function TuitionFinderForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Left column */}
               <div className="space-y-6">
-                {/* Subject Selection */}
+                {/* Subject Selection - Improved Dropdown */}
                 <div>
                   <label className="text-sm text-gray-600 block mb-2">Select subjects you teach</label>
-                  <div className="relative">
+                  <div className="relative subject-dropdown">
                     {loading ? (
                       <div className="w-full border border-gray-300 rounded p-2 text-gray-500">
                         Loading subjects...
@@ -241,26 +276,56 @@ export default function TuitionFinderForm() {
                         {error}
                       </div>
                     ) : (
-                      <select 
-                        multiple
-                        className="w-full border border-gray-300 rounded p-2 text-gray-800"
-                        value={formData.selectedSubjects}
-                        onChange={handleSubjectChange}
-                        size={Math.min(5, subjects.length || 0)}
-                      >
-                        {!subjects || subjects.length === 0 ? (
-                          <option disabled>No subjects available</option>
-                        ) : (
-                          subjects.map((subject, index) => (
-                            <option key={subject.id || index} value={subject.id || index}>
-                              {subject.name || subject.title || `Subject ${index + 1}`}
-                            </option>
-                          ))
+                      <div className="w-full">
+                        <div 
+                          className="w-full border border-gray-300 rounded p-2 text-gray-800 flex justify-between items-center cursor-pointer bg-white"
+                          onClick={() => setDropdownOpen(!dropdownOpen)}
+                        >
+                          <div className="flex flex-wrap gap-1">
+                            {formData.selectedSubjects.length === 0 ? (
+                              <span className="text-gray-500">Select subjects...</span>
+                            ) : (
+                              subjects
+                                .filter(subject => formData.selectedSubjects.includes(subject.id?.toString()))
+                                .map(subject => (
+                                  <span key={subject.id} className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-sm">
+                                    {subject.name || subject.title}
+                                  </span>
+                                ))
+                            )}
+                          </div>
+                          <svg className={`w-4 h-4 text-gray-500 transition-transform ${dropdownOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                        
+                        {dropdownOpen && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
+                            {subjects.length === 0 ? (
+                              <div className="p-2 text-gray-500">No subjects available</div>
+                            ) : (
+                              subjects.map((subject) => (
+                                <div 
+                                  key={subject.id} 
+                                  className="p-2 hover:bg-indigo-50 cursor-pointer flex items-center"
+                                  onClick={() => handleSubjectChange(subject.id?.toString())}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="form-checkbox h-4 w-4 text-indigo-600 mr-2"
+                                    checked={formData.selectedSubjects.includes(subject.id?.toString())}
+                                    onChange={() => {}}
+                                  />
+                                  <span>{subject.name || subject.title}</span>
+                                </div>
+                              ))
+                            )}
+                          </div>
                         )}
-                      </select>
+                      </div>
                     )}
                     <p className="text-xs text-gray-500 mt-1">
-                      Hold Ctrl (or Cmd) to select multiple subjects
+                      Click to open dropdown and select multiple subjects
                     </p>
                   </div>
                 </div>
@@ -397,7 +462,7 @@ export default function TuitionFinderForm() {
 
                 {/* School Teaching */}
                 <div className="mt-6">
-                  <p className="text-sm text-gray-600 mb-2">I am interested in teaching at schools given an opportunity</p>
+                  <p className="text-sm text-gray-600 mb-2">I teach at school</p>
                   <div className="flex space-x-6">
                     <label className="flex items-center">
                       <input
@@ -425,7 +490,17 @@ export default function TuitionFinderForm() {
                 {/* Document Upload */}
                 <div className="mt-6 flex items-center justify-between">
                   <p className="text-sm text-gray-600">Attach a document showing your experience</p>
-                  <button type="button" className="bg-indigo-800 text-white px-4 py-2 rounded-md flex items-center">
+                  <input 
+                    type="file" 
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden" 
+                  />
+                  <button 
+                    type="button" 
+                    className="bg-indigo-800 text-white px-4 py-2 rounded-md flex items-center"
+                    onClick={() => fileInputRef.current.click()}
+                  >
                     <svg className="w-4 h-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd" />
@@ -433,6 +508,11 @@ export default function TuitionFinderForm() {
                     Attach Document
                   </button>
                 </div>
+                {formData.experienceDocument && (
+                  <div className="text-sm text-green-600 mt-1">
+                    File selected: {formData.experienceDocument.name}
+                  </div>
+                )}
 
                 {/* Special Training */}
                 <div className="mt-6">
@@ -465,7 +545,11 @@ export default function TuitionFinderForm() {
 
             {/* Form Navigation */}
             <div className="flex justify-center pt-4 space-x-4 mt-8">
-              <button type="button" className="border border-indigo-800 text-indigo-800 px-8 py-2 rounded-full flex items-center">
+              <button 
+                type="button" 
+                className="border border-indigo-800 text-indigo-800 px-8 py-2 rounded-full flex items-center"
+                onClick={handleBack}
+              >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                 </svg>

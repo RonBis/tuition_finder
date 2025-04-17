@@ -75,6 +75,10 @@ const TutorDashboard = () => {
     setTimeout(() => setShowNotification(false), 3000);
   };
 
+  const handleLogout = () => {
+    navigate('/');
+  };
+
   const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const schedule = {
     'Sunday': { morning: 'M', afternoon: 'A', evening: 'E', mode: 'IN', group: 'G' },
@@ -87,7 +91,7 @@ const TutorDashboard = () => {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-[#EBECFF] relative">
+    <div className="fixed inset-0 flex flex-col bg-[#EBECFF] h-screen w-screen overflow-hidden">
       {/* Notification */}
       {showNotification && (
         <div className="fixed top-4 right-4 bg-white shadow-lg rounded-lg px-4 py-3 flex items-center space-x-2 animate-fade-in z-50">
@@ -122,7 +126,7 @@ const TutorDashboard = () => {
         </div>
       )}
 
-      <div className="bg-[#2E3192] text-white">
+      <div className="bg-[#2E3192] text-white w-full">
         <div className="w-full flex justify-between items-center px-6 h-16">
           <div className="flex items-center space-x-2">
             <img src="src/assets/LOGO (1).png" alt="Logo" className="h-8" />
@@ -131,16 +135,16 @@ const TutorDashboard = () => {
             <span className="text-lg font-bold">{profileData?.name || 'Loading...'}</span>
             <img src="src/assets/DP/dp1.jpg" alt="Profile" className="w-8 h-8 rounded-full object-cover" />
             <div className="text-sm">
-              <button className="hover:underline rounded-full">Logout</button> | <button className="hover:underline rounded-full">Help</button>
+              <button onClick={handleLogout} className="text-red-300 hover:underline rounded-full">Logout</button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 h-full w-full overflow-hidden">
         {/* Account Details Section */}
-        <div className="overflow-auto">
-          <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="overflow-auto h-full">
+          <div className="bg-white rounded-lg shadow-md p-6 h-full">
             <div className="flex justify-between mb-4">
               <h2 className="text-xl font-semibold">Account Details</h2>
             </div>
@@ -179,7 +183,7 @@ const TutorDashboard = () => {
                     <span className="text-gray-600">📍</span>
                     <span>Kolkata</span>
                   </div>
-                  <span className="text-blue-600">St. Thomas College of Engineering & Technology</span>
+                  <span className="text-blue-600"></span>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -214,8 +218,8 @@ const TutorDashboard = () => {
         </div>
 
         {/* Active Section */}
-        <div className="overflow-hidden">
-          <div className="bg-white rounded-lg shadow-md p-4 max-h-[715px] overflow-y-auto">
+        <div className="h-full overflow-hidden">
+          <div className="bg-white rounded-lg shadow-md p-4 h-full overflow-y-auto">
             <h2 className="text-xl font-semibold sticky top-0 bg-white py-2">Active</h2>
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">
               <div className="text-5xl mb-4">📚</div>
@@ -226,8 +230,8 @@ const TutorDashboard = () => {
         </div>
 
         {/* New Requests Section */}
-        <div className="overflow-auto">
-          <div className="bg-white rounded-lg shadow-md p-4">
+        <div className="h-full overflow-auto">
+          <div className="bg-white rounded-lg shadow-md p-4 h-full">
             <h2 className="text-xl font-semibold sticky top-0 bg-white py-2">New Requests</h2>
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">
               <div className="text-5xl mb-4">🔍</div>

@@ -342,7 +342,7 @@ const CombinedAuthForm = () => {
                     <input
                       type="text"
                       name="emailOrPhone"
-                      placeholder="Enter Mobile No. or Email Id"
+                      placeholder="Enter Email Id"
                       className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 
                         ${errors.emailOrPhone ? 'border-red-500 focus:ring-red-200' : 'focus:ring-indigo-200 focus:border-indigo-500'}`}
                       value={formData.emailOrPhone}

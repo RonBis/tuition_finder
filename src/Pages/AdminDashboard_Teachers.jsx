@@ -16,8 +16,9 @@ import {
   Loader
 } from 'lucide-react';
 import { teacherService } from '../services/adminteacher';
-
+import { useNavigate } from 'react-router-dom';
 const TeachersPage = () => {
+    const navigate = useNavigate();
   const [teachers, setTeachers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -77,7 +78,7 @@ const TeachersPage = () => {
         </div>
         <nav className="space-y-2 flex-1">
           {[
-            { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard' },
+            { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard', onClick: () => navigate('/admin') },
             { icon: <Users className="w-5 h-5" />, label: 'Teachers', active: true },
             { icon: <MessageSquare className="w-5 h-5" />, label: 'Enquiries' },
             { icon: <Building2 className="w-5 h-5" />, label: 'Recruiters' },
@@ -92,6 +93,7 @@ const TeachersPage = () => {
               className={`flex items-center space-x-3 p-2 rounded cursor-pointer ${
                 item.active ? 'bg-indigo-800' : 'hover:bg-indigo-600'
               }`}
+              onClick={item.onClick}
             >
               {item.icon}
               <span>{item.label}</span>
