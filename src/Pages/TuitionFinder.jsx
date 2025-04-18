@@ -451,6 +451,7 @@ const CombinedAuthForm = () => {
                     {/* Role selection dropdown */}
                     <div className="space-y-1">
                       <div className="relative">
+                        <label htmlFor="user_role_id" className="text-gray-700 mb-5">Select account type</label>
                         <select
                           name="user_role_id"
                           value={formData.user_role_id}

@@ -112,7 +112,7 @@ const Slots = () => {
     
     try {
       // Get teacher ID (you might want to get this from context, props, or localStorage)
-      const teacherId = localStorage.getItem('teacher_id') || 1; // Replace with actual teacher ID source
+      const teacherId = localStorage.getItem('teacher_id'); // Replace with actual teacher ID source
       
       // Prepare schedule data for the API
       const scheduleData = prepareScheduleData(teacherId);
@@ -129,7 +129,7 @@ const Slots = () => {
       } else {
         // Try to send multiple schedules
         // Option 1: If API supports batch creation
-        await slotsService.createSchedule({ teacher_schedules: scheduleData });
+        await slotsService.createSchedule(teacherId, { teacher_schedules: scheduleData });
         
         // Option 2: If API requires sending one by one (uncomment if needed)
         // for (const schedule of scheduleData) {

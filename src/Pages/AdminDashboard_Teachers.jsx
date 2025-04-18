@@ -10,31 +10,44 @@ import {
   DollarSign,
   MessageCircle,
   Search,
-  Filter,
   CheckCircle,
   PlusCircle,
   Loader
 } from 'lucide-react';
-import { teacherService } from '../services/adminteacher';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+
 const TeachersPage = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [teachers, setTeachers] = useState([]);
+  // Commented out the teacher preferences state
+  // const [teacherPreferences, setTeacherPreferences] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('Active Teachers');
 
   useEffect(() => {
-    fetchTeacherData();
+    fetchTeachers();
   }, []);
-
-  const fetchTeacherData = async () => {
+  
+  const fetchTeachers = async () => {
     try {
       setIsLoading(true);
-      const response = await teacherService.getMergedTeacherData();
-      setTeachers(response.data);
-      setError(null);
+      const response = await api.get('/api/v1/teachers');
+      console.log('API Response:', response.data);
+      
+      if (response.data.status === 'success') {
+        const teacherData = response.data.data;
+        console.log('Teacher Data:', teacherData);
+        // Check if the first teacher has a name
+        if (teacherData.length > 0) {
+          console.log('First teacher name:', teacherData[0].name);
+        }
+        setTeachers(teacherData);
+      } else {
+        setError('Failed to retrieve teacher data');
+      }
     } catch (err) {
       console.error('Failed to fetch teacher data:', err);
       setError('Failed to load teacher data. Please try again later.');
@@ -43,20 +56,36 @@ const TeachersPage = () => {
     }
   };
 
+  /* Commented out the teacher preferences function
+  const fetchTeacherPreferences = async (teacherId) => {
+    try {
+      const response = await api.get(`/api/v1/teachers/${teacherId}/teacher_preferences`);
+      
+      if (response.data.status === 'success' && response.data.data.length > 0) {
+        setTeacherPreferences(prev => ({
+          ...prev,
+          [teacherId]: response.data.data[0]
+        }));
+      }
+    } catch (err) {
+      console.error(`Failed to fetch preferences for teacher ${teacherId}:`, err);
+    }
+  };
+  */
+
   // Filter and search teachers
   const filteredTeachers = teachers.filter(teacher => {
     // Apply active/inactive filter
     const activeFilterMatch = 
       activeFilter === 'All Teachers' || 
-      (activeFilter === 'Active Teachers' && teacher.verified) ||
-      (activeFilter === 'Inactive Teachers' && !teacher.verified);
+      (activeFilter === 'Active Teachers' && teacher.is_active) ||
+      (activeFilter === 'Inactive Teachers' && !teacher.is_active);
       
     // Apply search filter
     const searchMatch = 
       searchTerm === '' || 
       teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.subjects.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.location.toLowerCase().includes(searchTerm.toLowerCase());
+      teacher.address?.toLowerCase().includes(searchTerm.toLowerCase());
       
     return activeFilterMatch && searchMatch;
   });
@@ -65,8 +94,25 @@ const TeachersPage = () => {
     setSearchTerm(e.target.value);
   };
 
-  const handleFilterChange = (filter) => {
-    setActiveFilter(filter);
+  /* 
+  // Commented out helper function for subjects
+  const getTeacherSubjects = (teacherId) => {
+    if (!teacherPreferences[teacherId] || !teacherPreferences[teacherId].subjects) {
+      return 'No subjects listed';
+    }
+    
+    return teacherPreferences[teacherId].subjects
+      .map(subject => subject.name)
+      .join(', ');
+  };
+  */
+
+  // Helper function to get profile photo URL
+  const getProfilePhotoUrl = (teacher) => {
+    if (teacher.profile_photo) {
+      return `http://localhost:3001${teacher.profile_photo}`;
+    }
+    return null;
   };
 
   return (
@@ -125,7 +171,15 @@ const TeachersPage = () => {
               <div className="relative">
                 <button 
                   className="bg-white border rounded-md px-4 py-2 flex items-center space-x-2"
-                  onClick={() => setActiveFilter(activeFilter === 'Active Teachers' ? 'All Teachers' : 'Active Teachers')}
+                  onClick={() => {
+                    if (activeFilter === 'Active Teachers') {
+                      setActiveFilter('Inactive Teachers');
+                    } else if (activeFilter === 'Inactive Teachers') {
+                      setActiveFilter('All Teachers');
+                    } else {
+                      setActiveFilter('Active Teachers');
+                    }
+                  }}
                 >
                   <span>{activeFilter}</span>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -144,7 +198,7 @@ const TeachersPage = () => {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search by teacher name, subject or location"
+                  placeholder="Search by teacher name or location"
                   className="pl-10 pr-4 py-2 border rounded-md w-64"
                   value={searchTerm}
                   onChange={handleSearchChange}
@@ -185,29 +239,34 @@ const TeachersPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredTeachers.map((teacher) => (
                     <div key={teacher.id} className="bg-white rounded-lg p-4 flex space-x-4 shadow-sm">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center text-gray-500">
-                        {teacher.name.charAt(0)}
+                      <div className="w-16 h-16 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center text-gray-500 overflow-hidden">
+                        {getProfilePhotoUrl(teacher) ? (
+                          <img 
+                            src={getProfilePhotoUrl(teacher)} 
+                            alt={teacher.name} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          teacher.name.charAt(0)
+                        )}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center space-x-1">
-                          <h3 className="font-medium">{teacher.name}</h3>
-                          {teacher.verified && (
-                            <CheckCircle className="h-4 w-4 text-blue-500" />
-                          )}
-                        </div>
+                      <div className="flex items-center space-x-1">
+                      <h3 className="font-medium">{teacher.name || 'Unnamed Teacher'}</h3>
+                       {teacher.is_active && (
+                      <CheckCircle className="h-4 w-4 text-blue-500" />
+                        )}
+                      </div>
                         <div className="text-sm text-gray-600">
-                          <p>{teacher.phone} | {teacher.email}</p>
-                          <p className="text-sm">{teacher.subjects}</p>
+                          <p>{teacher.mobile_number} | {teacher.email}</p>
+                          {/* Removed subject display */}
                         </div>
                         <div className="mt-2 flex items-center text-xs text-gray-500 space-x-4">
                           <div className="flex items-center space-x-1">
                             <MapPin className="h-3 w-3" />
-                            <span>{teacher.location}</span>
+                            <span>{teacher.address || 'No address'}</span>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <FileText className="h-3 w-3" />
-                            <span>{teacher.university}</span>
-                          </div>
+                          {/* Removed teacher preferences display */}
                         </div>
                       </div>
                     </div>

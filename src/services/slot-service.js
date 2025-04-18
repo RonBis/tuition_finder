@@ -9,9 +9,9 @@ export const slotsService = {
   getScheduleById: (scheduleId) => api.get(`/api/v1/teacher_schedules/${scheduleId}`),
   
   // Create a new schedule - accepting already formatted data
-  createSchedule: (formattedData) => {
+  createSchedule: (teacherId, formattedData) => {
     console.log('Sending schedule data to API:', formattedData);
-    return api.post('/api/v1/teacher_schedules', formattedData);
+    return api.post(`/api/v1/teachers/${teacherId}/teacher_schedules/import_schedule`, formattedData);
   },
   
   // Update an existing schedule

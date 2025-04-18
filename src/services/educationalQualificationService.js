@@ -13,17 +13,17 @@ export const educationalQualificationService = {
     // Format the data to match API expectations
     const formattedData = {
       "teacher_educational_qualification": {
-        "teacher_id": teacherId,
+        // "teacher_id": teacherId,
         "degree_id": qualificationData.degree_id,
-        "subject_id": qualificationData.subject_id || 1,
+        "subject_id": qualificationData.subject_id,
         "year_of_passing": qualificationData.yearofPassing,
         "school_name": qualificationData.schoolName,
-        "college_name": qualificationData.collegeName || "",
-        "university_name": qualificationData.universityName || ""
+        "college_name": qualificationData.collegeName,
+        "university_name": qualificationData.universityName
       }
     };
 
-    return api.post('/api/v1/teacher_educational_qualifications', formattedData);
+    return api.post(`/api/v1/teachers/${teacherId}/teacher_educational_qualifications`, formattedData);
   },
   
   // Update an existing qualification
@@ -31,11 +31,11 @@ export const educationalQualificationService = {
     const formattedData = {
       "teacher_educational_qualification": {
         "degree_id": qualificationData.degree_id,
-        "subject_id": qualificationData.subject_id || 1,
+        "subject_id": qualificationData.subject_id,
         "year_of_passing": qualificationData.yearofPassing,
         "school_name": qualificationData.schoolName,
-        "college_name": qualificationData.collegeName || "",
-        "university_name": qualificationData.universityName || ""
+        "college_name": qualificationData.collegeName,
+        "university_name": qualificationData.universityName
       }
     };
 

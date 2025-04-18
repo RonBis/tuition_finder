@@ -11,7 +11,7 @@ function ensureUserIdPersistence() {
   if (userId) {
     return userId;
   }
-  
+
   // Try to extract from user_data in localStorage
   const userData = localStorage.getItem('user_data');
   if (userData) {
@@ -80,12 +80,14 @@ const PersonalDetailsForm = () => {
     name: '',
     email: '',
     mobileNumber: '',
-    alternateNumber: '',
+    whatsappNumber: '',
     gender: '',
     dateOfBirth: '',
     address: '',
     latitude: '',
-    longitude: ''
+    longitude: '',
+    aadharPhoto: null,
+    profilePhoto: null
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -183,19 +185,24 @@ const PersonalDetailsForm = () => {
     if (isChecked) {
       setFormData(prev => ({
         ...prev,
-        alternateNumber: prev.mobileNumber
+        whatsappNumber: prev.mobileNumber
       }));
     } else {
       setFormData(prev => ({
         ...prev,
-        alternateNumber: ''
+        whatsappNumber: ''
       }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
-
+    if (!formData.aadharPhoto) {
+      newErrors.aadharPhoto = 'Aadhar card is required';
+    }
+    if (!formData.profilePhoto) {
+      newErrors.aadharPhoto = 'Profile photo is required';
+    }
     if (!formData.name) {
       newErrors.name = 'Name is required';
     }
@@ -212,8 +219,8 @@ const PersonalDetailsForm = () => {
       newErrors.mobileNumber = 'Invalid mobile number (10 digits required)';
     }
 
-    if (formData.alternateNumber && !/^\d{10}$/.test(formData.alternateNumber)) {
-      newErrors.alternateNumber = 'Invalid alternate number (10 digits required)';
+    if (formData.whatsappNumber && !/^\d{10}$/.test(formData.whatsappNumber)) {
+      newErrors.whatsappNumber = 'Invalid whatsapp number (10 digits required)';
     }
 
     if (!formData.gender) {
@@ -242,18 +249,26 @@ const PersonalDetailsForm = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value, type, files } = e.target;
     
-    // If mobile number changes and useSameMobile is checked, update alternate number too
-    if (name === 'mobileNumber' && useSameMobile) {
+    if (type === 'file') {
       setFormData(prev => ({
         ...prev,
-        alternateNumber: value
+        [name]: files[0]  // Store the actual File object, not just the path
       }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+      
+      // If mobile number changes and useSameMobile is checked, update whatsapp number too
+      if (name === 'mobileNumber' && useSameMobile) {
+        setFormData(prev => ({
+          ...prev,
+          whatsappNumber: value
+        }));
+      }
     }
     
     if (errors[name]) {
@@ -423,15 +438,15 @@ const PersonalDetailsForm = () => {
                 </div>
                 <input
                   type="tel"
-                  name="alternateNumber"
-                  value={formData.alternateNumber}
+                  name="whatsappNumber"
+                  value={formData.whatsappNumber}
                   onChange={handleInputChange}
-                  placeholder="Enter alternate number"
+                  placeholder="Enter whatsapp number"
                   className={`mt-1 block w-full px-3 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500 
-                    ${errors.alternateNumber ? 'border-red-500' : 'border-gray-300'}`}
+                    ${errors.whatsappNumber ? 'border-red-500' : 'border-gray-300'}`}
                   disabled={useSameMobile}
                 />
-                {errors.alternateNumber && <p className="mt-1 text-sm text-red-500">{errors.alternateNumber}</p>}
+                {errors.whatsappNumber && <p className="mt-1 text-sm text-red-500">{errors.whatsappNumber}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-600">Gender <span className="text-red-500">*</span></label>
@@ -445,7 +460,6 @@ const PersonalDetailsForm = () => {
                   <option value="">Choose</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
-                  <option value="other">Other</option>
                 </select>
                 {errors.gender && <p className="mt-1 text-sm text-red-500">{errors.gender}</p>}
               </div>
@@ -475,7 +489,60 @@ const PersonalDetailsForm = () => {
               />
               {errors.address && <p className="mt-1 text-sm text-red-500">{errors.address}</p>}
             </div>
-            
+            <div>
+                  <label className="block text-sm font-medium text-gray-600">Aadhar Card <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      name="aadharPhoto"
+                      onChange={handleInputChange}
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      id="aadhar-input"
+                    />
+                    <label
+                      htmlFor="aadhar-input" 
+                      className={`mt-1 flex items-center w-full px-3 py-2 border rounded-md cursor-pointer
+                        ${errors.aadharPhoto ? 'border-red-500' : 'border-gray-300'}`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                      <span className="text-gray-500">
+                        {formData.aadharPhoto ? formData.aadharPhoto.name : 'Click to upload Aadhar Card'}
+                      </span>
+                    </label>
+                  </div>
+                  {errors.aadharPhoto && <p className="mt-1 text-sm text-red-500">{errors.aadharPhoto}</p>}
+                  <p className="mt-1 text-xs text-gray-500">* Upload scanned copy of your Aadhar Card</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600">Profile Photo <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      name="profilePhoto"
+                      onChange={handleInputChange}
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      id="profile-input"
+                    />
+                    <label
+                      htmlFor="profile-input" 
+                      className={`mt-1 flex items-center w-full px-3 py-2 border rounded-md cursor-pointer
+                        ${errors.profilePhoto ? 'border-red-500' : 'border-gray-300'}`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                      <span className="text-gray-500">
+                        {formData.profilePhoto ? formData.profilePhoto.name : 'Click to upload Profile Photo'}
+                      </span>
+                    </label>
+                  </div>
+                  {errors.profilePhoto && <p className="mt-1 text-sm text-red-500">{errors.aadharPhoto}</p>}
+                  <p className="mt-1 text-xs text-gray-500">* Upload your Profile Photo</p>
+                </div>
             {/* Location Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
@@ -508,6 +575,7 @@ const PersonalDetailsForm = () => {
                 </div>
                 {errors.longitude && <p className="mt-1 text-sm text-red-500">{errors.longitude}</p>}
               </div>
+              
             </div>
             
             {/* Location status message */}

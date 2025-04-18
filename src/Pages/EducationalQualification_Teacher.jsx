@@ -14,7 +14,6 @@ const PersonalDetailsForm = () => {
     EducationalQualification: '',
     subject_id: '',
     certificate: null,
-    aadharCard: null
   });
 
   const [errors, setErrors] = useState({});
@@ -130,9 +129,6 @@ const PersonalDetailsForm = () => {
       }
     }
     
-    if (!formData.aadharCard) {
-      newErrors.aadharCard = 'Aadhar card is required';
-    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -326,7 +322,7 @@ const PersonalDetailsForm = () => {
                   {errors.schoolName && <p className="mt-1 text-sm text-red-500">{errors.schoolName}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600">College Name</label>
+                  <label className="block text-sm font-medium text-gray-600">College Name <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     name="collegeName"
@@ -339,7 +335,7 @@ const PersonalDetailsForm = () => {
                   {errors.collegeName && <p className="mt-1 text-sm text-red-500">{errors.collegeName}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600">University Name</label>
+                  <label className="block text-sm font-medium text-gray-600">University Name <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     name="universityName"
@@ -363,7 +359,7 @@ const PersonalDetailsForm = () => {
                   />
                   {errors.yearofPassing && <p className="mt-1 text-sm text-red-500">{errors.yearofPassing}</p>}
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-600">Latest Degree/Certificate <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <input
@@ -388,34 +384,8 @@ const PersonalDetailsForm = () => {
                     </label>
                   </div>
                   <p className="mt-1 text-xs text-gray-500">* File will be stored locally for now</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600">Aadhar Card <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <input
-                      type="file"
-                      name="aadharCard"
-                      onChange={handleInputChange}
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      className="hidden"
-                      id="aadhar-input"
-                    />
-                    <label
-                      htmlFor="aadhar-input" 
-                      className={`mt-1 flex items-center w-full px-3 py-2 border rounded-md cursor-pointer
-                        ${errors.aadharCard ? 'border-red-500' : 'border-gray-300'}`}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                      </svg>
-                      <span className="text-gray-500">
-                        {formData.aadharCard ? formData.aadharCard.name : 'Click to upload Aadhar Card'}
-                      </span>
-                    </label>
-                  </div>
-                  {errors.aadharCard && <p className="mt-1 text-sm text-red-500">{errors.aadharCard}</p>}
-                  <p className="mt-1 text-xs text-gray-500">* Upload scanned copy of your Aadhar Card</p>
-                </div>
+                </div> */}
+                
               </div>
               <div className="flex justify-between items-center mt-6">
                 <button

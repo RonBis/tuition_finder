@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { subjectService } from '../services/subjectService';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
+import { useNavigate } from 'react-router-dom';
+import { teacherService } from "../services/teacherService";
 
 export default function TuitionFinderForm() {
-  const navigate = useNavigate(); // Initialize navigate function
-  const fileInputRef = useRef(null); // Reference for file input
+  const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     teachLocation: true,
     teachSchools: true,
@@ -16,7 +17,7 @@ export default function TuitionFinderForm() {
     teachOnline: true,
     teachOffline: false,
     teachingMedium: "Bengali", // Default value
-    experienceDocument: null // Added for file upload
+    resume: null
   });
   
   const [subjects, setSubjects] = useState([]);
@@ -94,7 +95,7 @@ export default function TuitionFinderForm() {
     if (e.target.files && e.target.files[0]) {
       setFormData({
         ...formData,
-        experienceDocument: e.target.files[0]
+        resume: e.target.files[0]
       });
     }
   };
@@ -167,40 +168,33 @@ export default function TuitionFinderForm() {
     }
     
     // Prepare the data for teacher_preferences API submission
+    const teacherId = localStorage.getItem('teacher_id');
+    
+    if (!teacherId) {
+      setSubmitError("Teacher ID not found. Please ensure you're logged in properly.");
+      return;
+    }
+    
     const teacherPreferenceRequest = {
-      teacher_preference: {
-        teacher_id: parseInt(localStorage.getItem('teacher_id')) || 1,
-        teaching_radius_km: formData.radius,
-        preferred_teaching_type: "individual", // This could be another form field
-        prior_experience: parseInt(formData.experience) || 0,
-        teaching_mode: getModeOfTeaching(),
-        teaching_location_preference: formData.teachLocation,
-        teaching_school: formData.teachSchools,
-        special_need_children: formData.trainedSpecialChild,
-        special_attention_children: formData.teachSpecialChild,
-        subject_ids: formData.selectedSubjects.map(id => parseInt(id)),
-        preferred_medium: getPreferredMedium(formData.teachingMedium)
-      }
+      teaching_radius_km: parseInt(formData.radius) || 10,
+      preferred_teaching_type: "individual",
+      prior_experience: parseInt(formData.experience) || 0,
+      teaching_mode: getModeOfTeaching(),
+      teaching_location_preference: formData.teachLocation,
+      teaching_school: formData.teachSchools,
+      special_need_children: formData.trainedSpecialChild,
+      special_attention_children: formData.teachSpecialChild,
+      subject_ids: formData.selectedSubjects.map(id => parseInt(id)),
+      preferred_medium: getPreferredMedium(formData.teachingMedium),
+      resume: formData.resume,
     };
     
     try {
       console.log("Submitting request:", JSON.stringify(teacherPreferenceRequest, null, 2));
       
-      // Submit the form data to the new endpoint
-      const response = await fetch('http://localhost:3001/api/v1/teacher_preferences', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify(teacherPreferenceRequest)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        console.error('Server error response:', errorData);
-        throw new Error(`Failed to submit request: ${response.status} ${response.statusText}`);
-      }
+      // Submit the form data to the API
+      const response = await teacherService.createTeacherPreferences(teacherId, teacherPreferenceRequest);
+      console.log("Response from server:", response);
       
       // Handle successful submission
       alert('Your teacher preferences have been submitted successfully!');
@@ -327,33 +321,6 @@ export default function TuitionFinderForm() {
                     <p className="text-xs text-gray-500 mt-1">
                       Click to open dropdown and select multiple subjects
                     </p>
-                  </div>
-                </div>
-
-                {/* Teaching Location */}
-                <div className="mt-6">
-                  <p className="text-sm text-gray-600 mb-2">I am comfortable teaching at students' preferred location</p>
-                  <div className="flex space-x-6">
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        className="form-radio h-5 w-5 text-indigo-600"
-                        name="teachLocation"
-                        checked={formData.teachLocation}
-                        onChange={() => handleRadioChange('teachLocation', 'yes')}
-                      />
-                      <span className="ml-2 text-gray-800">Yes</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        className="form-radio h-5 w-5 text-indigo-600"
-                        name="teachLocation"
-                        checked={!formData.teachLocation}
-                        onChange={() => handleRadioChange('teachLocation', 'no')}
-                      />
-                      <span className="ml-2 text-gray-800">No</span>
-                    </label>
                   </div>
                 </div>
 
@@ -489,7 +456,7 @@ export default function TuitionFinderForm() {
 
                 {/* Document Upload */}
                 <div className="mt-6 flex items-center justify-between">
-                  <p className="text-sm text-gray-600">Attach a document showing your experience</p>
+                  <p className="text-sm text-gray-600">Attach your CV</p>
                   <input 
                     type="file" 
                     ref={fileInputRef}
@@ -505,12 +472,12 @@ export default function TuitionFinderForm() {
                       <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd" />
                     </svg>
-                    Attach Document
+                    Upload CV
                   </button>
                 </div>
-                {formData.experienceDocument && (
+                {formData.resume && (
                   <div className="text-sm text-green-600 mt-1">
-                    File selected: {formData.experienceDocument.name}
+                    File selected: {formData.resume.name}
                   </div>
                 )}
 

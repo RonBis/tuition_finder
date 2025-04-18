@@ -49,29 +49,27 @@ export const teacherService = {
     // Match exactly the format seen in your API request example
     const apiFormattedData = {
       "teacher": {
+        "user_id": userId,
         "name": teacherData.name,
         "address": teacherData.address,
         "mobile_number": teacherData.mobileNumber,
+        "whatsapp_number": teacherData.alternateNumber || "",
         "email": teacherData.email || `${teacherData.name.toLowerCase().replace(/\s+/g, '')}@example.com`,
-        "alt_mobile": teacherData.alternateNumber || "",
         "gender": teacherData.gender,
         "date_of_birth": formattedDOB,
-        "is_active": true,
-        "user_id": userId,
         // Add latitude and longitude if provided
         "latitude": teacherData.latitude || null,
-        "longitude": teacherData.longitude || null
+        "longitude": teacherData.longitude || null,
+        "profile_photo": teacherData.profilePhoto,
+        "aadhar_photo": teacherData.aadharPhoto,
+        "is_active": true,
       }
     };
     
     // Log the request for debugging
     console.log('Sending API request:', apiFormattedData);
     
-    return api.post('/api/v1/teachers', apiFormattedData, {
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
+    return api.postForm('/api/v1/teachers', apiFormattedData);
   },
   
   // Update an existing teacher
@@ -109,10 +107,57 @@ export const teacherService = {
   // Handle teacher preferences 
   getTeacherPreferences: (teacherId) => api.get(`/api/v1/teachers/${teacherId}/preferences`),
   
-  // Create teacher preferences
+  // Create teacher preferences - UPDATED to use axios instead of fetch
   createTeacherPreferences: (teacherId, preferenceData) => {
-    return api.post(`/api/v1/teachers/${teacherId}/preferences`, {
-      preference: preferenceData
+    // Create FormData object for proper file handling
+    const formData = new FormData();
+    
+    // Add all non-array, non-file properties
+    Object.keys(preferenceData).forEach(key => {
+      // Skip subject_ids and preferred_medium as we'll handle them specially
+      if (key !== 'subject_ids' && key !== 'preferred_medium' && key !== 'resume') {
+        formData.append(`teacher_preference[${key}]`, preferenceData[key]);
+      }
+    });
+    
+    // Handle subject_ids specially - convert array to individual form entries
+    if (preferenceData.subject_ids && Array.isArray(preferenceData.subject_ids)) {
+      preferenceData.subject_ids.forEach((id) => {
+        formData.append(`teacher_preference[subject_ids][]`, id);
+      });
+    }
+    
+    // Handle preferred_medium specially - convert array to individual form entries
+    if (preferenceData.preferred_medium && Array.isArray(preferenceData.preferred_medium)) {
+      preferenceData.preferred_medium.forEach((medium) => {
+        formData.append(`teacher_preference[preferred_medium][]`, medium);
+      });
+    }
+    
+    // Handle file upload separately
+    if (preferenceData.resume) {
+      formData.append('teacher_preference[resume]', preferenceData.resume);
+    }
+    
+    // Log the formData keys for debugging
+    console.log('FormData keys:', [...formData.keys()]);
+    
+    // Use axios through the api instance instead of fetch
+    return api.post(`/api/v1/teachers/${teacherId}/teacher_preferences`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => {
+      return response.data;
+    })
+    .catch(error => {
+      if (error.response && error.response.data) {
+        throw new Error(JSON.stringify(error.response.data));
+      } else {
+        throw new Error(`Request failed: ${error.message}`);
+      }
     });
   }
 };

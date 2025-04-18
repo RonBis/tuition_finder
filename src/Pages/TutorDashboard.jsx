@@ -10,11 +10,12 @@ const TutorDashboard = () => {
   const [notificationMessage, setNotificationMessage] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [teacherSubjects, setTeacherSubjects] = useState([]);
 
   useEffect(() => {
     // Load profile data from localStorage
     try {
-      const tokenString = localStorage.getItem('auth_token');
+      const authToken = localStorage.getItem('auth_token');
       const roleId = localStorage.getItem('role_id');
       const userId = localStorage.getItem('user_id');
       
@@ -29,12 +30,43 @@ const TutorDashboard = () => {
             ...authResponse.profile[0],
             role: authResponse.roles?.name || 'teacher'
           });
+          
+          // Get teacher ID from auth_response
+          const teacherId = authResponse.profile[0].id;
+          
+          // Fetch teacher preferences including subjects
+          if (authToken && teacherId) {
+            fetchTeacherPreferences(teacherId, authToken);
+          }
         }
       }
     } catch (error) {
       console.error('Error parsing profile data from localStorage:', error);
     }
   }, []);
+
+  // Function to fetch teacher preferences
+  const fetchTeacherPreferences = async (teacherId, authToken) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/v1/teachers/${teacherId}/teacher_preferences`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'success' && data.data && data.data.length > 0) {
+        setTeacherSubjects(data.data[0].subjects || []);
+      } else {
+        console.error('Error fetching teacher preferences:', data);
+      }
+    } catch (error) {
+      console.error('Error fetching teacher preferences:', error);
+    }
+  };
 
   const handleApprove = (request) => {
     const newTutoring = {
@@ -173,6 +205,25 @@ const TutorDashboard = () => {
                 >
                   Details
                 </button>
+              </div>
+            </div>
+
+            {/* Subjects Section */}
+            <div className="mb-4">
+              <h3 className="font-semibold mb-2">Subjects I Teach</h3>
+              <div className="flex flex-wrap gap-2">
+                {teacherSubjects.length > 0 ? (
+                  teacherSubjects.map((subject) => (
+                    <span 
+                      key={subject.id} 
+                      className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                    >
+                      {subject.name}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm">Loading subjects...</p>
+                )}
               </div>
             </div>
 
