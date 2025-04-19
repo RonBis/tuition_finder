@@ -104,7 +104,7 @@ const TutorDashboard = () => {
       // Create a full URL by prepending the base URL to the relative path
       return `http://localhost:3001${teacherDetails.profile_photo}`;
     }
-    return "src/assets/DP/dp1.jpg"; // Fallback image
+    return "/app/assets/DP/dp1.jpg"; // Fallback image
   };
 
   // Extract city from address
@@ -220,7 +220,7 @@ const TutorDashboard = () => {
       <div className="bg-[#2E3192] text-white w-full">
         <div className="w-full flex justify-between items-center px-6 h-16">
           <div className="flex items-center space-x-2">
-            <img src="src/assets/LOGO (1).png" alt="Logo" className="h-8" />
+            <img src="/app/assets/LOGO (1).png" alt="Logo" className="h-8" />
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-lg font-bold">{teacherDetails?.name || profileData?.name || 'Loading...'}</span>
@@ -228,7 +228,7 @@ const TutorDashboard = () => {
               src={getProfilePhotoUrl()} 
               alt="Profile" 
               className="w-8 h-8 rounded-full object-cover"
-              onError={(e) => {e.target.src = "src/assets/DP/dp1.jpg"}}
+              onError={(e) => {e.target.src = "/app/assets/DP/dp1.jpg"}}
             />
             <div className="text-sm">
               <button onClick={handleLogout} className="text-red-300 hover:underline rounded-full">Logout</button>
@@ -257,7 +257,7 @@ const TutorDashboard = () => {
                       src={getProfilePhotoUrl()} 
                       alt="Profile" 
                       className="w-16 h-16 rounded-full object-cover"
-                      onError={(e) => {e.target.src = "src/assets/DP/dp1.jpg"}}
+                      onError={(e) => {e.target.src = "/app/assets/DP/dp1.jpg"}}
                     />
                     <div>
                       <div className="text-lg font-bold text-gray-900">

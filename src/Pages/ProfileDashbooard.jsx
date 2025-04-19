@@ -39,7 +39,7 @@ const ProfileDashboard = () => {
               <div className="p-4">
                 <div className="flex justify-center mb-6">
                   <img 
-                    src="src/assets/DP/dp3.jpg"
+                    src="/app/assets/DP/dp3.jpg"
                     alt="Profile"
                     className="w-32 h-32 rounded-full object-cover"
                   />

@@ -247,7 +247,7 @@ const AdminAuthForm = () => {
     <div 
       className="h-screen w-screen overflow-hidden"
       style={{
-        backgroundImage: "url('/src/Pages/bg.png')",
+        backgroundImage: "url('/app/assets/bg.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}

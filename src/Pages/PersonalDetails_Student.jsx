@@ -204,7 +204,7 @@ const PersonalDetailsForm = () => {
       {/* Header */}
       <header className="bg-[#4527a0] text-white p-4 flex items-center" style={{height: '201px' }}>
         <img 
-          src="src/assets/LOGO (2).png" 
+          src="/app/assets/LOGO (2).png" 
           alt="Tuition Finder Logo"
           style={{
             height: '78.24px',

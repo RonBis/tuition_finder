@@ -210,7 +210,7 @@ const TuitionFinder = () => {
         <div className="w-full max-w-3xl px-6 py-8">
           {/* Logo Only */}
           <div className="flex justify-center mb-6">
-            <img src="/src/assets/LOGO.png" alt="Tuition Finder" className="h-16" />
+            <img src="//app/assets/LOGO.png" alt="Tuition Finder" className="h-16" />
           </div>
           
           {/* Error Message Display */}
@@ -456,7 +456,7 @@ const TuitionFinder = () => {
       {/* Right Section - Banner Image */}
       <div className="hidden lg:block lg:h-[1010px] lg:w-[902px] overflow-hidden">
         <img
-          src="/src/assets/banner.png"
+          src="//app/assets/banner.png"
           alt="Banner"
           className="object-cover w-full h-full"
         />

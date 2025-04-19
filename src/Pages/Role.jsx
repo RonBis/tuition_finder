@@ -73,7 +73,7 @@ const TuitionFinderPage = () => {
       <header className="bg-indigo-900 text-white p-4 flex items-center" style={{height: '201px' }}>
         <div className="container mx-auto flex items-center">
           <img 
-            src="src/assets/LOGO (2).png" 
+            src="/app/assets/LOGO (2).png" 
             alt="Tuition Finder Logo"
             className="h-20 cursor-pointer"
             onClick={() => navigate('/')}
@@ -93,7 +93,7 @@ const TuitionFinderPage = () => {
               cursor-pointer hover:shadow-lg transition-all flex flex-col items-center justify-center"
             onClick={() => handleCardClick('student')}
           >
-            <img src="src/assets/student-icon.png" alt="Student Icon" className="w-12 h-12 md:w-16 md:h-16" />
+            <img src="/app/assets/student-icon.png" alt="Student Icon" className="w-12 h-12 md:w-16 md:h-16" />
             <h3 className="mt-4 text-base md:text-lg font-medium">A Student looking for guidance</h3>
           </div>
 
@@ -102,7 +102,7 @@ const TuitionFinderPage = () => {
               cursor-pointer hover:shadow-lg transition-all flex flex-col items-center justify-center"
             onClick={() => handleCardClick('teacher')}
           >
-            <img src="src/assets/teacher-icon.png" alt="Teacher Icon" className="w-12 h-12 md:w-16 md:h-16" />
+            <img src="/app/assets/teacher-icon.png" alt="Teacher Icon" className="w-12 h-12 md:w-16 md:h-16" />
             <h3 className="mt-4 text-base md:text-lg font-medium">A teacher, looking for students</h3>
           </div>
 
@@ -111,7 +111,7 @@ const TuitionFinderPage = () => {
               cursor-pointer hover:shadow-lg transition-all flex flex-col items-center justify-center"
             onClick={() => handleCardClick('job')}
           >
-            <img src="src/assets/job-icon.png" alt="Job Icon" className="w-12 h-12 md:w-16 md:h-16" />
+            <img src="/app/assets/job-icon.png" alt="Job Icon" className="w-12 h-12 md:w-16 md:h-16" />
             <h3 className="mt-4 text-base md:text-lg font-medium">Seeking for Job opportunities</h3>
           </div>
         </div>
