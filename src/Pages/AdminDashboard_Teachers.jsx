@@ -150,20 +150,21 @@ const TeachersPage = () => {
           {[
             { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard', onClick: () => navigate('/admin') },
             { icon: <Users className="w-5 h-5" />, label: 'Teachers', active: true },
-            { icon: <MessageSquare className="w-5 h-5" />, label: 'Enquiries' },
-            { icon: <Building2 className="w-5 h-5" />, label: 'Recruiters' },
-            { icon: <BriefcaseIcon className="w-5 h-5" />, label: 'Jobs' },
-            { icon: <FileText className="w-5 h-5" />, label: 'Job Applications' },
-            { icon: <MapPin className="w-5 h-5" />, label: 'Service Area' },
-            { icon: <DollarSign className="w-5 h-5" />, label: 'Revenue' },
-            { icon: <MessageCircle className="w-5 h-5" />, label: 'Feedbacks' },
+            { icon: <MessageSquare className="w-5 h-5" />, label: 'Enquiries', disabled: true },
+            { icon: <Building2 className="w-5 h-5" />, label: 'Recruiters', disabled: true },
+            { icon: <BriefcaseIcon className="w-5 h-5" />, label: 'Jobs', disabled: true },
+            { icon: <FileText className="w-5 h-5" />, label: 'Job Applications', disabled: true },
+            { icon: <MapPin className="w-5 h-5" />, label: 'Service Area', disabled: true },
+            { icon: <DollarSign className="w-5 h-5" />, label: 'Revenue', disabled: true },
+            { icon: <MessageCircle className="w-5 h-5" />, label: 'Feedbacks', disabled: true },
           ].map((item, index) => (
             <div 
               key={index} 
               className={`flex items-center space-x-3 p-2 rounded cursor-pointer ${
-                item.active ? 'bg-indigo-800' : 'hover:bg-indigo-600'
+                item.active ? 'bg-indigo-800' : 
+                item.disabled ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-indigo-600'
               }`}
-              onClick={item.onClick}
+              onClick={!item.disabled ? item.onClick : undefined}
             >
               {item.icon}
               <span>{item.label}</span>

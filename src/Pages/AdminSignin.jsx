@@ -446,14 +446,6 @@ const AdminAuthForm = () => {
                   </>
                 )}
 
-                {authMode === 'login' && (
-                  <div className="flex justify-end">
-                    <a href="/admin-reset-password" className="text-indigo-600 hover:text-indigo-800 text-sm">
-                      Forgot password?
-                    </a>
-                  </div>
-                )}
-
                 <button
                   type="submit"
                   className={`w-full bg-indigo-800 text-white py-3 rounded-md ${

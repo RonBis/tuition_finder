@@ -489,13 +489,6 @@ const CombinedAuthForm = () => {
                   </>
                 )}
 
-                {authMode === 'login' && (
-                  <div className="flex justify-end">
-                    <a href="/forgot-password" className="text-indigo-600 hover:text-indigo-800 text-sm">
-                      Forgot password?
-                    </a>
-                  </div>
-                )}
 
                 <button
                   type="submit"
