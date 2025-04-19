@@ -386,7 +386,7 @@ export const authService = {
       console.error('Error during redirection:', error);
       if (setErrors) {
         setErrors({
-          apiError: 'Login successful but failed to get user information. Please try again.'
+          apiError: error.message || 'An error occurred. Please try again.'
         });
       }
       if (setIsLoading) {
@@ -454,7 +454,7 @@ export const handlePostLoginRedirection = async (navigate, setIsLoading, setErro
     console.error('Error during post-login redirection:', error);
     if (setErrors) {
       setErrors({
-        apiError: 'An unexpected error occurred during login. Please try again.'
+        apiError: error.message || 'An error occurred. Please try again.'
       });
     }
     if (setIsLoading) {

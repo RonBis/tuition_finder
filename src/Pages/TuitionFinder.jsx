@@ -18,6 +18,8 @@ const CombinedAuthForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
+  const [serverError, setServerError] = useState(''); // New state for server errors
+  const [serverSuccess, setServerSuccess] = useState(''); // New state for server success messages
   
   const navigate = useNavigate();
 
@@ -33,9 +35,7 @@ const CombinedAuthForm = () => {
       await authService.handleRoleBasedRedirection(navigate, setIsLoading, setErrors);
     } catch (error) {
       console.error('Error during redirection:', error);
-      setErrors({
-        apiError: 'Login successful but failed to get user information. Please try again.'
-      });
+      setServerError('Login successful but failed to get user information. Please try again.');
       setIsLoading(false);
     }
   };
@@ -95,6 +95,9 @@ const CombinedAuthForm = () => {
         [name]: ''
       }));
     }
+    // Clear server errors when user starts typing
+    if (serverError) setServerError('');
+    if (serverSuccess) setServerSuccess('');
   };
 
   const handleClear = (field) => {
@@ -108,6 +111,7 @@ const CombinedAuthForm = () => {
     if (validateLogin()) {
       try {
         setIsLoading(true);
+        setServerError(''); // Clear any previous errors
         
         // Create credentials object based on input type
         const credentials = formData.emailOrPhone.includes('@') 
@@ -140,16 +144,16 @@ const CombinedAuthForm = () => {
           console.log('Error response data:', error.response.data);
           
           if (error.response.data && error.response.data.message) {
-            setErrors({ apiError: error.response.data.message });
+            setServerError(error.response.data.message);
           } else if (error.response.status === 401) {
-            setErrors({ apiError: 'Invalid email/phone or password. Please try again.' });
+            setServerError('Invalid email/phone or password. Please try again.');
           } else {
-            setErrors({ apiError: `Authentication failed (${error.response.status}). Please try again.` });
+            setServerError(`Authentication failed (${error.response.status}). Please try again.`);
           }
         } else if (error.request) {
-          setErrors({ apiError: 'No response from server. Please try again later.' });
+          setServerError('No response from server. Please try again later.');
         } else {
-          setErrors({ apiError: error.message || 'Login failed. Please try again.' });
+          setServerError(error.message || 'Login failed. Please try again.');
         }
         
         setIsLoading(false);
@@ -162,16 +166,14 @@ const CombinedAuthForm = () => {
     if (validateSignup()) {
       try {
         setIsLoading(true);
-        
-        // Get role ID from form data
-        const userRoleId = parseInt(formData.user_role_id, 10);
+        setServerError(''); // Clear any previous errors
         
         // Determine if email or phone was provided
         const isEmail = formData.emailOrPhone.includes('@');
         
         const userData = {
           password: formData.password,
-          user_role_id: userRoleId
+          user_role_id: parseInt(formData.user_role_id, 10)
         };
         
         // Add either email or phone based on input
@@ -200,9 +202,7 @@ const CombinedAuthForm = () => {
         });
         
         // Show success message
-        setErrors({
-          apiSuccess: 'Registration successful! Please log in with your credentials.'
-        });
+        setServerSuccess('Registration successful! Please log in with your credentials.');
         
         setIsLoading(false);
         
@@ -213,10 +213,14 @@ const CombinedAuthForm = () => {
         if (error.response) {
           console.log('Error response data:', error.response.data);
           
-          if (error.response.data && error.response.data.message) {
-            setErrors({
-              apiError: error.response.data.message
-            });
+          // Check for the specific error format mentioned
+          if (error.response.data && error.response.data.error_description) {
+            setServerError(error.response.data.error_description);
+          } else if (error.response.data && error.response.data.error === "user_not_created" && 
+                    error.response.data.error_description === "Email has already been taken") {
+            setServerError('Email has already been taken');
+          } else if (error.response.data && error.response.data.message) {
+            setServerError(error.response.data.message);
           } else if (error.response.data && error.response.data.errors) {
             // Format API validation errors
             const apiErrors = {};
@@ -248,23 +252,17 @@ const CombinedAuthForm = () => {
             
             // If no specific field errors were mapped, show a general error
             if (Object.keys(apiErrors).length === 0) {
-              apiErrors.apiError = 'Validation failed. Please check your information.';
+              setServerError('Validation failed. Please check your information.');
+            } else {
+              setErrors(apiErrors);
             }
-            
-            setErrors(apiErrors);
           } else {
-            setErrors({
-              apiError: `Registration failed (${error.response.status}). Please try again.`
-            });
+            setServerError(`Registration failed (${error.response.status}). Please try again.`);
           }
         } else if (error.request) {
-          setErrors({
-            apiError: 'No response from server. Please try again later.'
-          });
+          setServerError('No response from server. Please try again later.');
         } else {
-          setErrors({
-            apiError: error.message || 'An error occurred. Please try again.'
-          });
+          setServerError(error.message || 'An error occurred. Please try again.');
         }
         setIsLoading(false);
       }
@@ -285,6 +283,8 @@ const CombinedAuthForm = () => {
     localStorage.clear();
     setAuthMode(prevMode => prevMode === 'login' ? 'signup' : 'login');
     setErrors({});
+    setServerError('');
+    setServerSuccess('');
   };
 
   return (
@@ -323,15 +323,15 @@ const CombinedAuthForm = () => {
                 {authMode === 'login' ? 'Log in to your account' : 'Join Tuition Finder to connect with teachers and students'}
               </p>
               
-              {errors.apiError && (
+              {serverError && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-                  {errors.apiError}
+                  {serverError}
                 </div>
               )}
               
-              {errors.apiSuccess && (
+              {serverSuccess && (
                 <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
-                  {errors.apiSuccess}
+                  {serverSuccess}
                 </div>
               )}
               

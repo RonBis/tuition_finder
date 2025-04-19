@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { teacherService } from '../services/teacherService';
 
 const TutorDashboard = () => {
   const navigate = useNavigate();
   const [activeTutorings, setActiveTutorings] = useState([]);
   const [newRequests, setNewRequests] = useState([]);
   const [profileData, setProfileData] = useState(null);
+  const [teacherDetails, setTeacherDetails] = useState(null);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [teacherSubjects, setTeacherSubjects] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Load profile data from localStorage
@@ -37,13 +40,40 @@ const TutorDashboard = () => {
           // Fetch teacher preferences including subjects
           if (authToken && teacherId) {
             fetchTeacherPreferences(teacherId, authToken);
+            fetchTeacherDetails(teacherId, authToken);
           }
         }
       }
     } catch (error) {
       console.error('Error parsing profile data from localStorage:', error);
+      setIsLoading(false);
     }
   }, []);
+
+  // Function to fetch teacher details
+  const fetchTeacherDetails = async (teacherId, authToken) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/v1/teachers/${teacherId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'success' && data.data) {
+        setTeacherDetails(data.data);
+      } else {
+        console.error('Error fetching teacher details:', data);
+      }
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching teacher details:', error);
+      setIsLoading(false);
+    }
+  };
 
   // Function to fetch teacher preferences
   const fetchTeacherPreferences = async (teacherId, authToken) => {
@@ -66,6 +96,29 @@ const TutorDashboard = () => {
     } catch (error) {
       console.error('Error fetching teacher preferences:', error);
     }
+  };
+
+  // Get profile photo URL or use fallback
+  const getProfilePhotoUrl = () => {
+    if (teacherDetails && teacherDetails.profile_photo) {
+      // Create a full URL by prepending the base URL to the relative path
+      return `http://localhost:3001${teacherDetails.profile_photo}`;
+    }
+    return "src/assets/DP/dp1.jpg"; // Fallback image
+  };
+
+  // Extract city from address
+  const getAddressCity = () => {
+    if (teacherDetails && teacherDetails.address) {
+      const addressParts = teacherDetails.address.split(' ');
+      // If address has city information, return it
+      if (addressParts.length >= 2) {
+        // Assuming city is the second last word in the address
+        // (This is based on the example address format "10 Gallif Street Block-5 Flat - 62 Kolkata 700003")
+        return addressParts[addressParts.length - 2];
+      }
+    }
+    return "Location not available";
   };
 
   const handleApprove = (request) => {
@@ -109,6 +162,12 @@ const TutorDashboard = () => {
 
   const handleLogout = () => {
     navigate('/');
+  };
+
+  const handleButtonClick = (action) => {
+    setNotificationMessage(`This ${action} feature is not available as of now`);
+    setShowNotification(true);
+    setTimeout(() => setShowNotification(false), 3000);
   };
 
   const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -164,8 +223,13 @@ const TutorDashboard = () => {
             <img src="src/assets/LOGO (1).png" alt="Logo" className="h-8" />
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-lg font-bold">{profileData?.name || 'Loading...'}</span>
-            <img src="src/assets/DP/dp1.jpg" alt="Profile" className="w-8 h-8 rounded-full object-cover" />
+            <span className="text-lg font-bold">{teacherDetails?.name || profileData?.name || 'Loading...'}</span>
+            <img 
+              src={getProfilePhotoUrl()} 
+              alt="Profile" 
+              className="w-8 h-8 rounded-full object-cover"
+              onError={(e) => {e.target.src = "src/assets/DP/dp1.jpg"}}
+            />
             <div className="text-sm">
               <button onClick={handleLogout} className="text-red-300 hover:underline rounded-full">Logout</button>
             </div>
@@ -181,90 +245,105 @@ const TutorDashboard = () => {
               <h2 className="text-xl font-semibold">Account Details</h2>
             </div>
 
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center space-x-4">
-                <img src="src/assets/DP/dp1.jpg" alt="Profile" className="w-16 h-16 rounded-full object-cover" />
-                <div>
-                  <div className="text-lg font-bold text-gray-900">
-                    {profileData?.name || 'Loading...'} ✓
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {profileData?.email || 'email@mail.com'}
-                  </div>
-                </div>
+            {isLoading ? (
+              <div className="flex justify-center items-center h-32">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700"></div>
               </div>
-              <div className="flex flex-col space-y-2">
-                <button 
-                  className="h-[34.46px] w-[87px] bg-white border border-[#79747E] text-[#79747E] rounded-full hover:bg-gray-50 hover:text-gray-900 flex items-center justify-center"
-                >
-                  Edit
-                </button>
-                <button 
-                  className="h-[34.46px] w-[87px] bg-white border border-[#79747E] text-[#79747E] rounded-full hover:bg-gray-50 hover:text-gray-900 flex items-center justify-center"
-                  onClick={() => navigate('/profile')}
-                >
-                  Details
-                </button>
-              </div>
-            </div>
-
-            {/* Subjects Section */}
-            <div className="mb-4">
-              <h3 className="font-semibold mb-2">Subjects I Teach</h3>
-              <div className="flex flex-wrap gap-2">
-                {teacherSubjects.length > 0 ? (
-                  teacherSubjects.map((subject) => (
-                    <span 
-                      key={subject.id} 
-                      className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-                    >
-                      {subject.name}
-                    </span>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-sm">Loading subjects...</p>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-[#EBECFF] w-full rounded-lg mb-4">
-              <div className="h-full flex flex-col justify-center px-4 py-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-gray-600">📍</span>
-                    <span>Kolkata</span>
-                  </div>
-                  <span className="text-blue-600"></span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                    <span className="w-3 h-3 bg-yellow-500 rounded-full"></span>
-                    <span>Certificate Added</span>
-                  </div>
-                  <button className="text-sm text-blue-600 hover:underline rounded-full">Add Update</button>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-3">Teaching Details</h3>
-              <div className="space-y-2">
-                {weekDays.map((day) => (
-                  <div key={day} className="flex items-center">
-                    <div className="w-24 text-sm">{day}</div>
-                    <div className="flex space-x-2">
-                      <span className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full">{schedule[day].morning}</span>
-                      <span className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full">{schedule[day].afternoon}</span>
-                      <span className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full">{schedule[day].evening}</span>
-                      <span className="w-6 h-6 flex items-center justify-center bg-green-100 rounded-full">{schedule[day].mode}</span>
-                      <span className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full">{schedule[day].group}</span>
+            ) : (
+              <>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center space-x-4">
+                    <img 
+                      src={getProfilePhotoUrl()} 
+                      alt="Profile" 
+                      className="w-16 h-16 rounded-full object-cover"
+                      onError={(e) => {e.target.src = "src/assets/DP/dp1.jpg"}}
+                    />
+                    <div>
+                      <div className="text-lg font-bold text-gray-900">
+                        {teacherDetails?.name || profileData?.name || 'Name not available'} 
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {teacherDetails?.email || profileData?.email || 'email@mail.com'}
+                      </div>
+                      {teacherDetails?.mobile_number && (
+                        <div className="text-sm text-gray-600">
+                          {teacherDetails.mobile_number}
+                        </div>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <div className="flex flex-col space-y-2">
+                    <button 
+                      className="h-[34.46px] w-[87px] bg-white border border-[#79747E] text-[#79747E] rounded-full hover:bg-gray-50 hover:text-gray-900 flex items-center justify-center"
+                      onClick={() => handleButtonClick('Edit')}
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      className="h-[34.46px] w-[87px] bg-white border border-[#79747E] text-[#79747E] rounded-full hover:bg-gray-50 hover:text-gray-900 flex items-center justify-center"
+                      onClick={() => handleButtonClick('Details')}
+                    >
+                      Details
+                    </button>
+                  </div>
+                </div>
+
+                {/* Subjects Section */}
+                <div className="mb-4">
+                  <h3 className="font-semibold mb-2">Subjects I Teach</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {teacherSubjects.length > 0 ? (
+                      teacherSubjects.map((subject) => (
+                        <span 
+                          key={subject.id} 
+                          className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                        >
+                          {subject.name}
+                        </span>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-sm">No subjects added yet</p>
+                    )}
+                  </div>
+                </div>
+
+                
+
+                {/* Address section */}
+                {teacherDetails?.address && (
+                  <div className="mb-4">
+                    <h3 className="font-semibold mb-2">Address</h3>
+                    <p className="text-sm text-gray-700">{teacherDetails.address}</p>
+                  </div>
+                )}
+
+                {/* Teacher preferences display */}
+                {teacherDetails?.teacher_preference && (
+                  <div className="mb-4">
+                    <h3 className="font-semibold mb-2">Teaching Preferences</h3>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">Mode:</span>
+                        <span className="capitalize">{teacherDetails.teacher_preference.teaching_mode}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">Type:</span>
+                        <span className="capitalize">{teacherDetails.teacher_preference.preferred_teaching_type}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">Experience:</span>
+                        <span>{teacherDetails.teacher_preference.prior_experience} years</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">Radius:</span>
+                        <span>{teacherDetails.teacher_preference.teaching_radius_km} km</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
 

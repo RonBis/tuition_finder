@@ -8,7 +8,7 @@ export const slotsService = {
   // Get a specific schedule by ID
   getScheduleById: (scheduleId) => api.get(`/api/v1/teacher_schedules/${scheduleId}`),
   
-  // Create a new schedule - accepting already formatted data
+  // Create a new schedule - correctly handling both single and batch scenarios
   createSchedule: (teacherId, formattedData) => {
     console.log('Sending schedule data to API:', formattedData);
     return api.post(`/api/v1/teachers/${teacherId}/teacher_schedules/import_schedule`, formattedData);

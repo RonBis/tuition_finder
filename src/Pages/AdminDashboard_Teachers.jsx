@@ -12,7 +12,10 @@ import {
   Search,
   CheckCircle,
   PlusCircle,
-  Loader
+  Loader,
+  ChevronLeft,
+  ChevronRight,
+  BookOpen
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -20,31 +23,46 @@ import api from '../services/api';
 const TeachersPage = () => {
   const navigate = useNavigate();
   const [teachers, setTeachers] = useState([]);
-  // Commented out the teacher preferences state
-  // const [teacherPreferences, setTeacherPreferences] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('Active Teachers');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalTeachers, setTotalTeachers] = useState(0);
+  const [paginationInfo, setPaginationInfo] = useState({});
 
   useEffect(() => {
-    fetchTeachers();
-  }, []);
+    fetchTeachers(currentPage, pageSize);
+  }, [currentPage, pageSize]);
   
-  const fetchTeachers = async () => {
+  const fetchTeachers = async (page, limit) => {
     try {
       setIsLoading(true);
-      const response = await api.get('/api/v1/teachers');
+      // Update the API call to include pagination parameters using the correct format
+      const response = await api.get('/api/v1/teachers', {
+        params: { page, limit }
+      });
       console.log('API Response:', response.data);
       
       if (response.data.status === 'success') {
         const teacherData = response.data.data;
         console.log('Teacher Data:', teacherData);
-        // Check if the first teacher has a name
-        if (teacherData.length > 0) {
-          console.log('First teacher name:', teacherData[0].name);
-        }
+        
         setTeachers(teacherData);
+        
+        // Use the actual teacher_count from the API response
+        const totalCount = response.data.teacher_count || teacherData.length;
+        setTotalTeachers(totalCount);
+        setTotalPages(Math.ceil(totalCount / limit));
+        
+        // Store pagination info from API
+        if (response.data.pagination) {
+          setPaginationInfo(response.data.pagination);
+        }
       } else {
         setError('Failed to retrieve teacher data');
       }
@@ -55,23 +73,6 @@ const TeachersPage = () => {
       setIsLoading(false);
     }
   };
-
-  /* Commented out the teacher preferences function
-  const fetchTeacherPreferences = async (teacherId) => {
-    try {
-      const response = await api.get(`/api/v1/teachers/${teacherId}/teacher_preferences`);
-      
-      if (response.data.status === 'success' && response.data.data.length > 0) {
-        setTeacherPreferences(prev => ({
-          ...prev,
-          [teacherId]: response.data.data[0]
-        }));
-      }
-    } catch (err) {
-      console.error(`Failed to fetch preferences for teacher ${teacherId}:`, err);
-    }
-  };
-  */
 
   // Filter and search teachers
   const filteredTeachers = teachers.filter(teacher => {
@@ -84,8 +85,14 @@ const TeachersPage = () => {
     // Apply search filter
     const searchMatch = 
       searchTerm === '' || 
-      teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.address?.toLowerCase().includes(searchTerm.toLowerCase());
+      teacher.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      teacher.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      teacher.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      teacher.mobile_number?.includes(searchTerm) ||
+      // Search in subjects if they exist
+      (teacher.subjects && teacher.subjects.some(subject => 
+        subject.name.toLowerCase().includes(searchTerm.toLowerCase())
+      ));
       
     return activeFilterMatch && searchMatch;
   });
@@ -94,18 +101,29 @@ const TeachersPage = () => {
     setSearchTerm(e.target.value);
   };
 
-  /* 
-  // Commented out helper function for subjects
-  const getTeacherSubjects = (teacherId) => {
-    if (!teacherPreferences[teacherId] || !teacherPreferences[teacherId].subjects) {
-      return 'No subjects listed';
+  // Handle page change
+  const goToPage = (page) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
     }
-    
-    return teacherPreferences[teacherId].subjects
-      .map(subject => subject.name)
-      .join(', ');
   };
-  */
+
+  // Navigate to next/previous page using API links if available
+  const goToNextPage = () => {
+    if (paginationInfo.next) {
+      setCurrentPage(paginationInfo.next);
+    } else {
+      goToPage(currentPage + 1);
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (paginationInfo.prev) {
+      setCurrentPage(paginationInfo.prev);
+    } else {
+      goToPage(currentPage - 1);
+    }
+  };
 
   // Helper function to get profile photo URL
   const getProfilePhotoUrl = (teacher) => {
@@ -113,6 +131,12 @@ const TeachersPage = () => {
       return `http://localhost:3001${teacher.profile_photo}`;
     }
     return null;
+  };
+
+  // Helper function to format subjects list with commas
+  const formatSubjectsList = (subjects) => {
+    if (!subjects || subjects.length === 0) return 'No subjects';
+    return subjects.map(subject => subject.name).join(', ');
   };
 
   return (
@@ -163,6 +187,7 @@ const TeachersPage = () => {
         <div className="p-6">
           <div className="mb-6">
             <h2 className="text-2xl font-semibold">Teachers</h2>
+            <p className="text-sm text-gray-500">Manage all registered teachers in the system</p>
           </div>
 
           {/* Search and filter options */}
@@ -194,23 +219,6 @@ const TeachersPage = () => {
                 </button>
               </div>
             </div>
-            <div className="flex space-x-2">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search by teacher name or location"
-                  className="pl-10 pr-4 py-2 border rounded-md w-64"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-                <div className="absolute left-3 top-2.5 text-gray-400">
-                  <Search className="h-4 w-4" />
-                </div>
-              </div>
-              <button className="bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-md px-4 py-2 flex items-center space-x-2">
-                <span>Export list</span>
-              </button>
-            </div>
           </div>
 
           {/* Loading state */}
@@ -231,6 +239,10 @@ const TeachersPage = () => {
           {/* Teachers grid */}
           {!isLoading && !error && (
             <>
+              <div className="mb-4 text-sm text-gray-500">
+                <span>Total: {totalTeachers} teachers</span>
+              </div>
+              
               {filteredTeachers.length === 0 ? (
                 <div className="bg-white p-8 rounded-lg text-center">
                   <p className="text-gray-500">No teachers found matching your criteria.</p>
@@ -238,7 +250,7 @@ const TeachersPage = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredTeachers.map((teacher) => (
-                    <div key={teacher.id} className="bg-white rounded-lg p-4 flex space-x-4 shadow-sm">
+                    <div key={teacher.id} className="bg-white rounded-lg p-4 flex space-x-4 shadow-sm hover:shadow transition-shadow duration-200">
                       <div className="w-16 h-16 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center text-gray-500 overflow-hidden">
                         {getProfilePhotoUrl(teacher) ? (
                           <img 
@@ -247,32 +259,121 @@ const TeachersPage = () => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          teacher.name.charAt(0)
+                          teacher.name?.charAt(0)
                         )}
                       </div>
                       <div className="flex-1">
-                      <div className="flex items-center space-x-1">
-                      <h3 className="font-medium">{teacher.name || 'Unnamed Teacher'}</h3>
-                       {teacher.is_active && (
-                      <CheckCircle className="h-4 w-4 text-blue-500" />
-                        )}
-                      </div>
+                        <div className="flex items-center space-x-1">
+                          <h3 className="font-medium">{teacher.name || 'Unnamed Teacher'}</h3>
+                          {teacher.is_active && (
+                            <CheckCircle className="h-4 w-4 text-blue-500" />
+                          )}
+                        </div>
                         <div className="text-sm text-gray-600">
                           <p>{teacher.mobile_number} | {teacher.email}</p>
-                          {/* Removed subject display */}
                         </div>
                         <div className="mt-2 flex items-center text-xs text-gray-500 space-x-4">
                           <div className="flex items-center space-x-1">
                             <MapPin className="h-3 w-3" />
                             <span>{teacher.address || 'No address'}</span>
                           </div>
-                          {/* Removed teacher preferences display */}
+                          {teacher.teacher_preference && (
+                            <div className="flex items-center space-x-1">
+                              <span>
+                                {teacher.teacher_preference.teaching_mode} | 
+                                {teacher.teacher_preference.prior_experience} yrs exp
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {/* Subjects section */}
+                        <div className="mt-2 flex items-center text-xs text-gray-500">
+                          <div className="flex items-center space-x-1">
+                            <BookOpen className="h-3 w-3" />
+                            <span className="font-medium">Subjects:</span> 
+                            <span>{formatSubjectsList(teacher.subjects)}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
+
+              {/* Pagination controls */}
+              <div className="mt-6 flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
+                <div className="text-sm text-gray-600">
+                  Showing {Math.min((currentPage - 1) * pageSize + 1, totalTeachers)} to {Math.min(currentPage * pageSize, totalTeachers)} of {totalTeachers} teachers
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <button 
+                    onClick={goToPrevPage}
+                    disabled={currentPage === 1}
+                    className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-indigo-600 hover:bg-indigo-50'}`}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  
+                  {/* Page numbers */}
+                  <div className="flex space-x-1">
+                    {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                      let pageNum;
+                      
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      if (pageNum > 0 && pageNum <= totalPages) {
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => goToPage(pageNum)}
+                            className={`w-8 h-8 flex items-center justify-center rounded-md ${
+                              currentPage === pageNum
+                                ? 'bg-indigo-600 text-white'
+                                : 'text-gray-700 hover:bg-indigo-50'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                  
+                  <button 
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-indigo-600 hover:bg-indigo-50'}`}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Rows per page:</span>
+                  <select 
+                    value={pageSize} 
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1); // Reset to first page when changing page size
+                    }}
+                    className="border rounded-md p-1 text-sm"
+                  >
+                    {[3, 5, 10, 20].map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </>
           )}
         </div>

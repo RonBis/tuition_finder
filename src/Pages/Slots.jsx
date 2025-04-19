@@ -60,104 +60,89 @@ const Slots = () => {
   };
 
   // Function to transform UI state into API format
-  const prepareScheduleData = (teacherId) => {
-    // We should always return an array of schedules
-    const schedules = [];
+  // Function to transform UI state into API format
+const prepareScheduleData = (teacherId) => {
+  // Create the schedules array that will go inside teacher_schedules
+  const schedules = [];
+  
+  // For each selected day
+  days.forEach(day => {
+    if (!selectedSlots[day]) return; // Skip days that aren't selected
     
-    // For each selected day
-    days.forEach(day => {
-      if (!selectedSlots[day]) return; // Skip days that aren't selected
+    const weekDayNum = dayToNumber[day];
+    
+    // Create time_slots_attributes array for this day
+    const timeSlots = [];
+    
+    // For each day, find the selected times
+    times.forEach(time => {
+      if (!selectedTimes[`${day}-${time}`]) return; // Skip times that aren't selected
       
-      const weekDayNum = dayToNumber[day];
-      
-      // Group time slots by preferred_group for this day
-      const groupedSlots = {};
-      
-      // For each day, find the selected times
-      times.forEach(time => {
-        if (!selectedTimes[`${day}-${time}`]) return; // Skip times that aren't selected
-        
-        const preferredGroup = "individual"; // Default to individual
-        
-        if (!groupedSlots[preferredGroup]) {
-          groupedSlots[preferredGroup] = {
-            preferred_group: preferredGroup,
-            time_of_day: []
-          };
-        }
-        
-        // Add this time to the group's time_of_day array
-        groupedSlots[preferredGroup].time_of_day.push(time.toLowerCase());
+      // Add this time as its own object in time_slots_attributes
+      timeSlots.push({
+        time_of_day: time.toLowerCase(),
+        preferred_group: "any" // Changed from "individual" to "any" per API format
       });
-      
-      if (Object.keys(groupedSlots).length > 0) {
-        // Create schedule object for this day
-        schedules.push({
-          teacher_id: teacherId,
-          week_day: weekDayNum,
-          time_slots_attributes: Object.values(groupedSlots)
-        });
-      }
     });
     
-    return schedules;
+    // Create schedule object for this day with time_slots_attributes
+    if (timeSlots.length > 0) {
+      schedules.push({
+        week_day: weekDayNum,
+        time_slots_attributes: timeSlots
+      });
+    }
+  });
+  
+  // Return the final formatted data object
+  return {
+    teacher_id: parseInt(teacherId, 10), // Ensure it's a number
+    teacher_schedules: schedules
   };
+};
 
   // Function to handle form submission
-  const handleSubmit = async () => {
-    if (!hasValidSelection) return;
+ // Function to handle form submission
+const handleSubmit = async () => {
+  if (!hasValidSelection) return;
+  
+  setIsSubmitting(true);
+  setError(null);
+  
+  try {
+    // Get teacher ID from localStorage
+    const teacherId = localStorage.getItem('teacher_id'); 
     
-    setIsSubmitting(true);
-    setError(null);
+    // Prepare schedule data for the API
+    const scheduleData = prepareScheduleData(teacherId);
     
-    try {
-      // Get teacher ID (you might want to get this from context, props, or localStorage)
-      const teacherId = localStorage.getItem('teacher_id'); // Replace with actual teacher ID source
-      
-      // Prepare schedule data for the API
-      const scheduleData = prepareScheduleData(teacherId);
-      
-      // For debugging
-      console.log('Sending schedule data:', JSON.stringify(scheduleData, null, 2));
-      
-      // Handle both single and multiple schedules
-      if (scheduleData.length === 0) {
-        throw new Error('No valid schedules to submit');
-      } else if (scheduleData.length === 1) {
-        // Send single schedule
-        await slotsService.createSchedule(scheduleData[0]);
-      } else {
-        // Try to send multiple schedules
-        // Option 1: If API supports batch creation
-        await slotsService.createSchedule(teacherId, { teacher_schedules: scheduleData });
-        
-        // Option 2: If API requires sending one by one (uncomment if needed)
-        // for (const schedule of scheduleData) {
-        //   await slotsService.createSchedule(schedule);
-        // }
-      }
-      
-      console.log('Schedule saved successfully');
-      setShowSuccessMessage(true);
-      
-      // Redirect to home page after showing success message
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
-      
-    } catch (error) {
-      console.error('Error saving schedule:', error);
-      console.error('Error details:', error.response?.data);
-      console.error('Status:', error.response?.status);
-      setError(
-        error.response?.data?.message || 
-        error.message ||
-        'Failed to save schedule. Please try again.'
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    // For debugging
+    console.log('Sending schedule data:', JSON.stringify(scheduleData, null, 2));
+    
+    // Send the formatted data to the API
+    await slotsService.createSchedule(teacherId, scheduleData);
+    
+    console.log('Schedule saved successfully');
+    setShowSuccessMessage(true);
+    
+    // Redirect to home page after showing success message
+    setTimeout(() => {
+      navigate('/');
+    }, 2000);
+    
+  } catch (error) {
+    console.error('Error saving schedule:', error);
+    console.error('Error details:', error.response?.data);
+    console.error('Status:', error.response?.status);
+    setError(
+      error.response?.data?.message || 
+      error.message ||
+      'Failed to save schedule. Please try again.'
+    );
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="w-screen h-screen flex flex-col bg-[#EBECFF]">

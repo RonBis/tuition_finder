@@ -201,7 +201,7 @@ const PersonalDetailsForm = () => {
       newErrors.aadharPhoto = 'Aadhar card is required';
     }
     if (!formData.profilePhoto) {
-      newErrors.aadharPhoto = 'Profile photo is required';
+      newErrors.profilePhoto = 'Profile photo is required';
     }
     if (!formData.name) {
       newErrors.name = 'Name is required';
@@ -319,14 +319,32 @@ const PersonalDetailsForm = () => {
       } catch (error) {
         console.error('Error submitting form:', error);
         
+        // Improved error handling to extract error_description
         let errorMessage = 'Failed to save your information. Please try again.';
         
-        // Check for specific error details from the API
+        // Check for various error response formats
         if (error.response) {
           console.log('API Error Response:', error.response.data);
-          errorMessage = error.response.data?.message || errorMessage;
           
-          // If there are validation errors, display them
+          // Check for error_description in various formats
+          if (error.response.data?.error_description) {
+            errorMessage = error.response.data.error_description;
+          } else if (error.response.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (typeof error.response.data === 'string') {
+            try {
+              // Try to parse if it's a JSON string
+              const parsedError = JSON.parse(error.response.data);
+              errorMessage = parsedError.error_description || parsedError.message || errorMessage;
+            } catch (e) {
+              // If not JSON, use as is if it looks like an error message
+              if (error.response.data.includes('error') || error.response.data.includes('fail')) {
+                errorMessage = error.response.data;
+              }
+            }
+          }
+          
+          // Store the detailed validation errors if available
           if (error.response.data?.errors) {
             setApiErrorDetails(error.response.data.errors);
           }
@@ -361,7 +379,7 @@ const PersonalDetailsForm = () => {
         <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-md">
           <h1 className="text-3xl font-bold text-center mb-8">Personal Details</h1>
           
-          {/* API Error Messages */}
+          {/* API Error Messages - Updated to display error_description clearly */}
           {apiError && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
               <strong className="font-bold">Error: </strong>
@@ -490,59 +508,59 @@ const PersonalDetailsForm = () => {
               {errors.address && <p className="mt-1 text-sm text-red-500">{errors.address}</p>}
             </div>
             <div>
-                  <label className="block text-sm font-medium text-gray-600">Aadhar Card <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <input
-                      type="file"
-                      name="aadharPhoto"
-                      onChange={handleInputChange}
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      className="hidden"
-                      id="aadhar-input"
-                    />
-                    <label
-                      htmlFor="aadhar-input" 
-                      className={`mt-1 flex items-center w-full px-3 py-2 border rounded-md cursor-pointer
-                        ${errors.aadharPhoto ? 'border-red-500' : 'border-gray-300'}`}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                      </svg>
-                      <span className="text-gray-500">
-                        {formData.aadharPhoto ? formData.aadharPhoto.name : 'Click to upload Aadhar Card'}
-                      </span>
-                    </label>
-                  </div>
-                  {errors.aadharPhoto && <p className="mt-1 text-sm text-red-500">{errors.aadharPhoto}</p>}
-                  <p className="mt-1 text-xs text-gray-500">* Upload scanned copy of your Aadhar Card</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600">Profile Photo <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <input
-                      type="file"
-                      name="profilePhoto"
-                      onChange={handleInputChange}
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      className="hidden"
-                      id="profile-input"
-                    />
-                    <label
-                      htmlFor="profile-input" 
-                      className={`mt-1 flex items-center w-full px-3 py-2 border rounded-md cursor-pointer
-                        ${errors.profilePhoto ? 'border-red-500' : 'border-gray-300'}`}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                      </svg>
-                      <span className="text-gray-500">
-                        {formData.profilePhoto ? formData.profilePhoto.name : 'Click to upload Profile Photo'}
-                      </span>
-                    </label>
-                  </div>
-                  {errors.profilePhoto && <p className="mt-1 text-sm text-red-500">{errors.aadharPhoto}</p>}
-                  <p className="mt-1 text-xs text-gray-500">* Upload your Profile Photo</p>
-                </div>
+              <label className="block text-sm font-medium text-gray-600">Aadhar Card <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <input
+                  type="file"
+                  name="aadharPhoto"
+                  onChange={handleInputChange}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="hidden"
+                  id="aadhar-input"
+                />
+                <label
+                  htmlFor="aadhar-input" 
+                  className={`mt-1 flex items-center w-full px-3 py-2 border rounded-md cursor-pointer
+                    ${errors.aadharPhoto ? 'border-red-500' : 'border-gray-300'}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                  </svg>
+                  <span className="text-gray-500">
+                    {formData.aadharPhoto ? formData.aadharPhoto.name : 'Click to upload Aadhar Card'}
+                  </span>
+                </label>
+              </div>
+              {errors.aadharPhoto && <p className="mt-1 text-sm text-red-500">{errors.aadharPhoto}</p>}
+              <p className="mt-1 text-xs text-gray-500">* Upload scanned copy of your Aadhar Card</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-600">Profile Photo <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <input
+                  type="file"
+                  name="profilePhoto"
+                  onChange={handleInputChange}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="hidden"
+                  id="profile-input"
+                />
+                <label
+                  htmlFor="profile-input" 
+                  className={`mt-1 flex items-center w-full px-3 py-2 border rounded-md cursor-pointer
+                    ${errors.profilePhoto ? 'border-red-500' : 'border-gray-300'}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                  </svg>
+                  <span className="text-gray-500">
+                    {formData.profilePhoto ? formData.profilePhoto.name : 'Click to upload Profile Photo'}
+                  </span>
+                </label>
+              </div>
+              {errors.profilePhoto && <p className="mt-1 text-sm text-red-500">{errors.profilePhoto}</p>}
+              <p className="mt-1 text-xs text-gray-500">* Upload your Profile Photo</p>
+            </div>
             {/* Location Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
@@ -575,7 +593,6 @@ const PersonalDetailsForm = () => {
                 </div>
                 {errors.longitude && <p className="mt-1 text-sm text-red-500">{errors.longitude}</p>}
               </div>
-              
             </div>
             
             {/* Location status message */}

@@ -14,8 +14,8 @@ export default function TuitionFinderForm() {
     experience: "2",
     radius: "10",
     selectedSubjects: [],
-    teachOnline: true,
-    teachOffline: false,
+    teachOnline: false, // Disabled online teaching
+    teachOffline: true, // Default to offline
     teachingMedium: "Bengali", // Default value
     resume: null
   });
@@ -149,21 +149,36 @@ export default function TuitionFinderForm() {
     } else if (formData.teachOffline) {
       return "offline";
     }
-    return "online"; // Default fallback
+    return "offline"; // Default fallback
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError(null);
     
-    // Validate form data before submission
+    // Validate form data before submission - all fields are mandatory
     if (formData.selectedSubjects.length === 0) {
       setSubmitError("Please select at least one subject");
       return;
     }
     
-    if (!formData.teachOnline && !formData.teachOffline) {
-      setSubmitError("Please select at least one teaching mode (online or offline)");
+    if (!formData.teachOffline) {
+      setSubmitError("Offline teaching mode is required");
+      return;
+    }
+    
+    if (!formData.resume) {
+      setSubmitError("Please upload your CV");
+      return;
+    }
+    
+    if (!formData.radius || formData.radius === "0") {
+      setSubmitError("Please specify a valid teaching radius");
+      return;
+    }
+    
+    if (!formData.experience) {
+      setSubmitError("Please specify your teaching experience");
       return;
     }
     
@@ -259,7 +274,7 @@ export default function TuitionFinderForm() {
               <div className="space-y-6">
                 {/* Subject Selection - Improved Dropdown */}
                 <div>
-                  <label className="text-sm text-gray-600 block mb-2">Select subjects you teach</label>
+                  <label className="text-sm text-gray-600 block mb-2">Select subjects you teach <span className="text-red-500">*</span></label>
                   <div className="relative subject-dropdown">
                     {loading ? (
                       <div className="w-full border border-gray-300 rounded p-2 text-gray-500">
@@ -326,25 +341,27 @@ export default function TuitionFinderForm() {
 
                 {/* Teaching Experience */}
                 <div className="mt-6">
-                  <label className="text-sm text-gray-600 block mb-2">Prior teaching experience in years</label>
+                  <label className="text-sm text-gray-600 block mb-2">Prior teaching experience in years <span className="text-red-500">*</span></label>
                   <input
                     type="number"
                     name="experience"
                     value={formData.experience}
                     onChange={handleChange}
                     min="0"
+                    required
                     className="w-full border border-gray-300 rounded p-2 text-gray-800"
                   />
                 </div>
 
                 {/* Teaching Medium - Updated with proper dropdown */}
                 <div className="mt-6">
-                  <label className="text-sm text-gray-600 block mb-2">Medium of Teaching</label>
+                  <label className="text-sm text-gray-600 block mb-2">Medium of Teaching <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <select 
                       name="teachingMedium"
                       value={formData.teachingMedium}
                       onChange={handleChange}
+                      required
                       className="w-full border border-gray-300 rounded p-2 pr-8 appearance-none text-gray-800"
                     >
                       {teachingMediumOptions.map((option, index) => (
@@ -361,7 +378,7 @@ export default function TuitionFinderForm() {
 
                 {/* Special Needs Teaching */}
                 <div className="mt-6">
-                  <p className="text-sm text-gray-600 mb-2">I am okay to teach a child who needs special attention</p>
+                  <p className="text-sm text-gray-600 mb-2">I am okay to teach a child who needs special attention <span className="text-red-500">*</span></p>
                   <div className="flex space-x-6">
                     <label className="flex items-center">
                       <input
@@ -370,6 +387,7 @@ export default function TuitionFinderForm() {
                         name="teachSpecialChild"
                         checked={formData.teachSpecialChild}
                         onChange={() => handleRadioChange('teachSpecialChild', 'yes')}
+                        required
                       />
                       <span className="ml-2 text-gray-800">Yes</span>
                     </label>
@@ -380,6 +398,7 @@ export default function TuitionFinderForm() {
                         name="teachSpecialChild"
                         checked={!formData.teachSpecialChild}
                         onChange={() => handleRadioChange('teachSpecialChild', 'no')}
+                        required
                       />
                       <span className="ml-2 text-gray-800">No</span>
                     </label>
@@ -391,16 +410,16 @@ export default function TuitionFinderForm() {
               <div className="space-y-6">
                 {/* Teaching Mode - Updated to separate checkboxes */}
                 <div>
-                  <label className="text-sm text-gray-600 block mb-2">Teaching mode preference</label>
+                  <label className="text-sm text-gray-600 block mb-2">Teaching mode preference <span className="text-red-500">*</span></label>
                   <div className="space-y-2">
-                    <label className="flex items-center">
+                    <label className="flex items-center opacity-50 cursor-not-allowed">
                       <input
                         type="checkbox"
-                        className="form-checkbox h-5 w-5 text-indigo-600"
-                        checked={formData.teachOnline}
-                        onChange={() => setFormData({...formData, teachOnline: !formData.teachOnline})}
+                        className="form-checkbox h-5 w-5 text-gray-400"
+                        checked={false}
+                        disabled
                       />
-                      <span className="ml-2 text-gray-800">Online</span>
+                      <span className="ml-2 text-gray-500">Online (Currently unavailable)</span>
                     </label>
                     <label className="flex items-center">
                       <input
@@ -408,6 +427,7 @@ export default function TuitionFinderForm() {
                         className="form-checkbox h-5 w-5 text-indigo-600"
                         checked={formData.teachOffline}
                         onChange={() => setFormData({...formData, teachOffline: !formData.teachOffline})}
+                        required
                       />
                       <span className="ml-2 text-gray-800">Offline</span>
                     </label>
@@ -416,20 +436,21 @@ export default function TuitionFinderForm() {
 
                 {/* Teaching Radius */}
                 <div className="mt-6">
-                  <label className="text-sm text-gray-600 block mb-2">I teach within radius (in KMs)</label>
+                  <label className="text-sm text-gray-600 block mb-2">I teach within radius (in KMs) <span className="text-red-500">*</span></label>
                   <input
                     type="number"
                     name="radius"
                     value={formData.radius}
                     onChange={handleChange}
                     min="1"
+                    required
                     className="w-full border border-gray-300 rounded p-2 text-gray-800"
                   />
                 </div>
 
                 {/* School Teaching */}
                 <div className="mt-6">
-                  <p className="text-sm text-gray-600 mb-2">I teach at school</p>
+                  <p className="text-sm text-gray-600 mb-2">I teach at school <span className="text-red-500">*</span></p>
                   <div className="flex space-x-6">
                     <label className="flex items-center">
                       <input
@@ -438,6 +459,7 @@ export default function TuitionFinderForm() {
                         name="teachSchools"
                         checked={formData.teachSchools}
                         onChange={() => handleRadioChange('teachSchools', 'yes')}
+                        required
                       />
                       <span className="ml-2 text-gray-800">Yes</span>
                     </label>
@@ -448,6 +470,7 @@ export default function TuitionFinderForm() {
                         name="teachSchools"
                         checked={!formData.teachSchools}
                         onChange={() => handleRadioChange('teachSchools', 'no')}
+                        required
                       />
                       <span className="ml-2 text-gray-800">No</span>
                     </label>
@@ -456,12 +479,13 @@ export default function TuitionFinderForm() {
 
                 {/* Document Upload */}
                 <div className="mt-6 flex items-center justify-between">
-                  <p className="text-sm text-gray-600">Attach your CV</p>
+                  <p className="text-sm text-gray-600">Attach your CV <span className="text-red-500">*</span></p>
                   <input 
                     type="file" 
                     ref={fileInputRef}
                     onChange={handleFileChange}
                     className="hidden" 
+                    required
                   />
                   <button 
                     type="button" 
@@ -483,7 +507,7 @@ export default function TuitionFinderForm() {
 
                 {/* Special Training */}
                 <div className="mt-6">
-                  <p className="text-sm text-gray-600 mb-2">I am trained to teach specially-abled children</p>
+                  <p className="text-sm text-gray-600 mb-2">I am trained to teach specially-abled children <span className="text-red-500">*</span></p>
                   <div className="flex space-x-6">
                     <label className="flex items-center">
                       <input
@@ -492,6 +516,7 @@ export default function TuitionFinderForm() {
                         name="trainedSpecialChild"
                         checked={formData.trainedSpecialChild}
                         onChange={() => handleRadioChange('trainedSpecialChild', 'yes')}
+                        required
                       />
                       <span className="ml-2 text-gray-800">Yes</span>
                     </label>
@@ -502,6 +527,7 @@ export default function TuitionFinderForm() {
                         name="trainedSpecialChild"
                         checked={!formData.trainedSpecialChild}
                         onChange={() => handleRadioChange('trainedSpecialChild', 'no')}
+                        required
                       />
                       <span className="ml-2 text-gray-800">No</span>
                     </label>

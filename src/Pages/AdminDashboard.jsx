@@ -58,27 +58,6 @@ const Dashboard = () => {
 
   const COLORS = ['#36A2EB', '#FF6384', '#FFCE56'];
 
-  const notifications = [
-    {
-      title: "Home Medical Assistance",
-      action: "added a new job",
-      recruiter: "RecruiterName",
-      time: "a few moments ago"
-    },
-    {
-      title: "Teacher Registration",
-      action: "registered as a teacher",
-      name: "TeacherName",
-      time: "a few moments ago"
-    },
-    {
-      title: "History and Civics Teacher",
-      action: "applied for job role",
-      name: "Sanjay Ghosh",
-      time: "a few moments ago"
-    }
-  ];
-
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-gray-50">
       {/* Sidebar */}
@@ -264,67 +243,20 @@ const Dashboard = () => {
         {/* Notifications */}
         <div className="p-4 border-b">
           <h3 className="text-lg font-semibold mb-4">Notifications</h3>
-          <div className="space-y-4">
-            {notifications.map((notification, index) => (
-              <div key={index} className="flex items-start space-x-3 p-2 border-b last:border-b-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm">
-                    <span className="font-medium">{notification.recruiter || notification.name}</span>
-                    {" "}{notification.action}{" "}
-                    <span className="text-blue-600">{notification.title}</span>
-                  </p>
-                  <p className="text-xs text-gray-500">{notification.time}</p>
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+            <BellIcon className="w-12 h-12 text-gray-300 mb-2" />
+            <p className="text-center">No new notifications</p>
+            <p className="text-sm text-center">You're all caught up!</p>
           </div>
         </div>
 
         {/* Teacher Approvals */}
         <div className="p-4">
           <h3 className="text-lg font-semibold mb-4">Teacher Approvals</h3>
-          <div className="space-y-4">
-            {[
-              {
-                name: "Amit Kundu",
-                education: "M Tech | University of Calcutta",
-                subjects: "Physics, Mathematics",
-              },
-              {
-                name: "Subham Malty",
-                education: "B Tech | University of Kalyani",
-                subjects: "Physics",
-              },
-              {
-                name: "Sana Khan",
-                education: "MSc | Delhi University",
-                subjects: "Geography",
-              }
-            ].map((teacher, index) => (
-              <div key={index} className="p-4 border rounded-lg">
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                    <span className="text-gray-600 font-medium">{teacher.name[0]}</span>
-                  </div>
-                  <div>
-                    <p className="font-medium">{teacher.name}</p>
-                    <p className="text-sm text-gray-500">{teacher.education}</p>
-                    <p className="text-sm text-gray-500">Subjects: {teacher.subjects}</p>
-                  </div>
-                </div>
-                <div className="flex space-x-2 mt-2">
-                  <button className="flex-1 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                    Approve
-                  </button>
-                  <button className="flex-1 py-1 border border-gray-300 rounded hover:bg-gray-50">
-                    Reject
-                  </button>
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+            <UserIcon className="w-12 h-12 text-gray-300 mb-2" />
+            <p className="text-center">No pending approvals</p>
+            <p className="text-sm text-center">All teacher applications have been processed</p>
           </div>
         </div>
       </div>
