@@ -291,7 +291,7 @@ const CombinedAuthForm = () => {
     <div 
       className="h-screen w-screen overflow-hidden"
       style={{
-        backgroundImage: "url('/app/assets/bg.png')",
+        backgroundImage: "url('/assets/bg.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}

@@ -128,7 +128,7 @@ const TeachersPage = () => {
   // Helper function to get profile photo URL
   const getProfilePhotoUrl = (teacher) => {
     if (teacher.profile_photo) {
-      return `http://localhost:3001${teacher.profile_photo}`;
+      return `https://api.stareducators.in${teacher.profile_photo}`;
     }
     return null;
   };

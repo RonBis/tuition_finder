@@ -95,7 +95,7 @@ const AdminAuthForm = () => {
         
         // Create the API instance for authentication
         const api = axios.create({
-          baseURL: 'http://localhost:3001',
+          baseURL: 'https://api.stareducators.in',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -163,7 +163,7 @@ const AdminAuthForm = () => {
         
         // Create the API instance for authentication
         const api = axios.create({
-          baseURL: 'http://localhost:3001',
+          baseURL: 'https://api.stareducators.in',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -247,7 +247,7 @@ const AdminAuthForm = () => {
     <div 
       className="h-screen w-screen overflow-hidden"
       style={{
-        backgroundImage: "url('/app/assets/bg.png')",
+        backgroundImage: "url('/assets/bg.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
